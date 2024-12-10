@@ -44,6 +44,7 @@ int main(int argc, char* args[])
 	pTimer->Start();
 	float printTimer = 0.f;
 	bool isLooping = true;
+	
 	while (isLooping)
 	{
 		//--------- Get input events ---------

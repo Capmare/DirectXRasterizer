@@ -20,11 +20,49 @@ namespace dae {
 		{
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		
 	}
 
 	Renderer::~Renderer()
 	{
 		
+		// order of release matters, has to be inverse of initialization
+		if (m_pRenderTargetView)
+		{
+			m_pRenderTargetView->Release();
+
+		}
+		if (m_pRenderTargetBuffer)
+		{
+			m_pRenderTargetBuffer->Release();
+		}
+		if (m_pDepthStencilView)
+		{
+			m_pDepthStencilView->Release();
+		}
+		if (m_pDepthStencilBuffer)
+		{
+			m_pDepthStencilBuffer->Release();
+		}
+		if (m_SwapChain)
+		{
+			m_SwapChain->Release();
+		}
+		if (m_pDxgiFactory)
+		{
+			m_pDxgiFactory->Release();
+		}
+		if (m_pDeviceContext)
+		{
+			m_pDeviceContext->ClearState();
+			m_pDeviceContext->Flush();
+			m_pDeviceContext->Release();
+		}
+		if (m_pDevice)
+		{
+			m_pDevice->Release();
+		}
 	}
 
 	void Renderer::Update(const Timer* pTimer)
@@ -55,8 +93,7 @@ namespace dae {
 		if (FAILED(result)) return result;
 
 		// Create DXGI factory
-		IDXGIFactory1* pDxgiFactory{};
-		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&pDxgiFactory));
+		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&m_pDxgiFactory));
 		if (FAILED(result)) return result;
 		// create swapchaindesc
 
@@ -84,7 +121,7 @@ namespace dae {
 		swapChainDesc.OutputWindow = sysWMInfo.info.win.window;
 
 		//create the swap chain
-		result = pDxgiFactory->CreateSwapChain(m_pDevice, &swapChainDesc, &m_SwapChain);
+		result = m_pDxgiFactory->CreateSwapChain(m_pDevice, &swapChainDesc, &m_SwapChain);
 		if (FAILED(result)) return result;
 
 		// create depth stencil buffer
