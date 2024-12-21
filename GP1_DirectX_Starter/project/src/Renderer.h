@@ -53,5 +53,8 @@ namespace dae
 
 		Mesh* triangleMesh{};
 
+
+		const FLOAT BackgroundColor[4] = { 0.f,0.f,0.f,0.f };
+
 	};
 }

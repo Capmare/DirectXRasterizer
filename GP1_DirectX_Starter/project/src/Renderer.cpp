@@ -77,8 +77,14 @@ namespace dae {
 		if (!m_IsInitialized)
 			return;
 
+		// clear back buffer
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, BackgroundColor);
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
+
 		triangleMesh->Render(m_pDeviceContext);
-		m_SwapChain->Present(1, 0);
+
+		// switch the back buffer and front buffer
+		m_SwapChain->Present(0, 0);
 
 	}
 
@@ -186,7 +192,6 @@ namespace dae {
 			indeces
 		);
 
-		m_SwapChain->Present(0, 0);
 
 
 
