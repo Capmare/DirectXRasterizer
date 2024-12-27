@@ -26,12 +26,7 @@ public:
 	Mesh& operator=(Mesh&&) noexcept = delete;
 
 	void Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj);
-	Matrix GetWorldmatrix() const { return m_Worldmatrix; }
 	Effect* GetEffect() const { return m_pEffect; }
-private:
-	Effect* m_pEffect;
-	ID3D11Buffer* m_pVertexBuffer;
-	ID3D11Buffer* m_pIndexBuffer;
 
 	Matrix m_Worldmatrix
 	{
@@ -40,6 +35,12 @@ private:
 		Vector4{0,0,1,0},
 		Vector4{0,0,0,1}
 	};
+private:
+	Effect* m_pEffect;
+	ID3D11Buffer* m_pVertexBuffer;
+	ID3D11Buffer* m_pIndexBuffer;
+
+
 
 
 	uint32_t m_NumIndeces;

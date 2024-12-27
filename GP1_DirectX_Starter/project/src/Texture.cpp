@@ -44,9 +44,6 @@ namespace dae
 
 	}
 
-	
-
-
 	Texture::~Texture()
 	{
 		m_pSRV->Release();
@@ -62,25 +59,4 @@ namespace dae
 		return new Texture{ pDevice,IMG_Load(path.c_str()) };
 	}
 
-	//ColorRGB Texture::Sample(const Vector2& uv) const
-	//{
-	//	//TODO
-	//	//Sample the correct texel for the given uv
-	//	
-	//	int x = uv.x * m_pSurface->w;
-	//	int y = uv.y * m_pSurface->h;
-	//
-	//	Uint8 r;
-	//	Uint8 g;
-	//	Uint8 b;
-	//
-	//	SDL_GetRGB(m_pSurfacePixels[int(x + y * m_pSurface->w)], m_pSurface->format, &r, &g, &b);
-	//
-	//	ColorRGB color = {(float)r,(float)g,(float)b};
-	//
-	//	color /= 255;
-	//
-	//
-	//	return {color};
-	//}
 }

@@ -42,6 +42,8 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 		&m_pInputLayout
 	);
 
+	if (FAILED(result)) return;
+
 	m_pMatWorldViewProjVariable = m_pCurrentEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
 	if (!m_pMatWorldViewProjVariable->IsValid())
 	{
@@ -56,15 +58,30 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 
 	}
 
+	m_pSamplerVariable = m_pCurrentEffect->GetVariableByName("gSamplerState")->AsSampler();
+	if (!m_pSamplerVariable->IsValid())
+	{
+		std::wcout << L"m_pSamplerState not valid";
 
+	}
+	
+	
 
-	if (FAILED(result)) return;
+	
 
 
 }
 
 Effect::~Effect()
 {
+	if (m_pSamplerState)
+	{
+		m_pSamplerState->Release();
+	}
+	if (m_pSamplerVariable)
+	{
+		m_pSamplerVariable->Release();
+	}
 	if (m_pDiffuseMapVariable)
 	{
 		m_pDiffuseMapVariable->Release();
@@ -85,7 +102,7 @@ Effect::~Effect()
 	{
 		m_pCurrentEffect->Release();
 	}
-	
+
 	
 }
 
@@ -155,4 +172,25 @@ void Effect::SetMatrix(const float* m)
 {
 	
 	m_pMatWorldViewProjVariable->SetMatrix(m);
+}
+
+void Effect::ChangeSampler(ID3D11Device* m_pDevice, D3D11_FILTER filter)
+{
+	// Change sampler state
+	if (m_pSamplerState)
+	{
+		m_pSamplerState->Release(); // release previous memory
+	}
+	D3D11_SAMPLER_DESC samplerDesc{};
+	samplerDesc.Filter = filter;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MaxAnisotropy = 16;                        // using for anisotropy only
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+	HRESULT result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pSamplerState);
+	if (FAILED(result)) return;
+
+	m_pSamplerVariable->SetSampler(0, m_pSamplerState);
 }

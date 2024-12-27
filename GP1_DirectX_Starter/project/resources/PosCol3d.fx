@@ -1,14 +1,14 @@
 
 float4x4 gWorldViewProj : WorldViewProjection;
 Texture2D gDiffuseMap : DiffuseMap;
-SamplerState gSampler : register(s0);
+//SamplerState gSamplerState
 
-//SamplerState MeshTextureSampler
-//{
-//    Filter = MIN_MAG_MIP_LINEAR;
-//    AddressU = Wrap;
-//    AddressV = Wrap;
-//};
+SamplerState gSamplerState
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
 
 struct VS_INPUT
 {
@@ -42,7 +42,7 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	return gDiffuseMap.Sample(gSampler, input.uv);
+	return gDiffuseMap.Sample(gSamplerState, input.uv);
 }
 
 technique11 DefaultTechnique

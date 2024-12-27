@@ -18,7 +18,7 @@ namespace dae {
 			m_IsInitialized = true;
 			std::cout << "DirectX is initialized and ready!\n";
 
-			m_pCamera.Initialize(45.f, Vector3{ 0.f,0.f,-10.f });
+			m_pCamera.Initialize(45.f, Vector3{ 0.f,0.f,-50.f });
 		}
 		else
 		{
@@ -26,8 +26,8 @@ namespace dae {
 		}
 
 		m_pCamera.aspectRatio = (float)m_Width / (float)m_Height;
-
-
+		
+		triangleMesh->m_Worldmatrix *= Matrix::CreateRotationY(PI);
 
 	}
 
@@ -95,7 +95,7 @@ namespace dae {
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
 		
-		triangleMesh->Render(m_pDeviceContext, triangleMesh->GetWorldmatrix() * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
+		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
 
@@ -108,20 +108,22 @@ namespace dae {
 
 		if (samplerCount == 0)
 		{
-			currentFilter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; 
+			currentFilter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 
 		}
 		if (samplerCount == 1)
 		{
-			currentFilter = D3D11_FILTER_ANISOTROPIC;
+			
+			currentFilter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 
 		}
 		if (samplerCount == 2)
 		{
-			currentFilter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+			
+			currentFilter = D3D11_FILTER_ANISOTROPIC;
 
 		}
-
+		triangleMesh->GetEffect()->ChangeSampler(m_pDevice,currentFilter);
 		if (samplerCount == 2)
 		{
 			samplerCount = 0; 
@@ -223,7 +225,7 @@ namespace dae {
 		m_pDeviceContext->RSSetViewports(1, &viewport);
 
 
-		// Utils::ParseOBJ("resources/vehicle.obj", vertices, indices);
+		Utils::ParseOBJ("resources/vehicle.obj", vertices, indices);
 
 		triangleMesh = new Mesh(
 			m_pDevice,
@@ -231,7 +233,7 @@ namespace dae {
 			indices
 		);
 
-		Diffuse = Texture::LoadFromFile(m_pDevice, "resources/uv_grid_2.png");
+		Diffuse = Texture::LoadFromFile(m_pDevice, "resources/vehicle_diffuse.png");
 		triangleMesh->GetEffect()->SetDiffuseMap(Diffuse);
 
 

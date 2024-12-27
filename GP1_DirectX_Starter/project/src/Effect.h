@@ -26,15 +26,18 @@ public:
 	ID3D11InputLayout* GetInputLayout() const { return m_pInputLayout; }
 
 	void SetMatrix(const float* m);
+
+	void ChangeSampler(ID3D11Device* m_pDevice, D3D11_FILTER filter);
 private:
 	
 
-	ID3D11Device* m_pDevice;
-	ID3DX11Effect* m_pCurrentEffect;
-	ID3DX11EffectTechnique* m_pTechnique;
-	ID3D11InputLayout* m_pInputLayout;
-	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable;
-	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable;
+	ID3DX11Effect* m_pCurrentEffect{};
+	ID3DX11EffectTechnique* m_pTechnique{};
+	ID3D11InputLayout* m_pInputLayout{};
+	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable{};
+	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable{};
+	ID3DX11EffectSamplerVariable* m_pSamplerVariable{};
+	ID3D11SamplerState* m_pSamplerState{};
 };
 
 
