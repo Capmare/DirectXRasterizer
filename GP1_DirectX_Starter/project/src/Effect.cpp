@@ -11,7 +11,7 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 	}
 
 	// vertex layout
-	static constexpr uint32_t numElements{ 2 };
+	static constexpr uint32_t numElements{ 3 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
@@ -23,6 +23,11 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 	vertexDesc[1].AlignedByteOffset = 12;
 	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[2].SemanticName = "UV";
+	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+	vertexDesc[2].AlignedByteOffset = 24;
+	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 
 	// create input layout
@@ -37,12 +42,37 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 		&m_pInputLayout
 	);
 
+	m_pMatWorldViewProjVariable = m_pCurrentEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
+	if (!m_pMatWorldViewProjVariable->IsValid())
+	{
+		std::wcout << L"m_pMatWorldViewProjVariable not valid";
+	}
+
+
+	m_pDiffuseMapVariable = m_pCurrentEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	if (!m_pDiffuseMapVariable->IsValid())
+	{
+		std::wcout << L"m_pDiffuseMapVariable not valid";
+
+	}
+
+
+
 	if (FAILED(result)) return;
+
 
 }
 
 Effect::~Effect()
 {
+	if (m_pDiffuseMapVariable)
+	{
+		m_pDiffuseMapVariable->Release();
+	}
+	if (m_pMatWorldViewProjVariable)
+	{
+		m_pMatWorldViewProjVariable->Release();
+	}
 	if (m_pInputLayout)
 	{
 		m_pInputLayout->Release();
@@ -111,4 +141,18 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring& ass
 
 	}
 	return pEffect;
+}
+
+void Effect::SetDiffuseMap(Texture* pDiffuseTexture)
+{
+	if (m_pDiffuseMapVariable)
+	{
+		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
+	}
+}
+
+void Effect::SetMatrix(const float* m)
+{
+	
+	m_pMatWorldViewProjVariable->SetMatrix(m);
 }

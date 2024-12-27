@@ -1,5 +1,7 @@
 #pragma once
 #include "Mesh.h"
+#include "Camera.h"
+#include "Texture.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -20,6 +22,7 @@ namespace dae
 		void Update(const Timer* pTimer);
 		void Render() const;
 
+		void ChangeToNextSampler();
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -43,18 +46,28 @@ namespace dae
 
 		
 		std::vector<Vertex> vertices{
-			{XMFLOAT3{.0f,.5f,.5f},		XMFLOAT3{1.f,0.f,0.f}},
-			{XMFLOAT3{.5f,-.5f,.5f},	XMFLOAT3{0.f,0.f,1.f} },
-			{XMFLOAT3{-.5f,-.5f,.5f},	XMFLOAT3{ 0.f,1.f,0.f }}
+			{ { -3.f,  3.f, -2.f}, {1.f,1.f,1.f}, { 0, 0 } },
+			{ {  .0f,  3.f, -2.f}, {1.f,1.f,1.f}, { .5, 0 } },
+			{ {  3.f,  3.f, -2.f}, {1.f,1.f,1.f}, { 1, 0 } },
+			{ { -3.f,  .0f, -2.f}, {1.f,1.f,1.f}, { 0, .5 } },
+			{ {  .0f,  .0f, -2.f}, {1.f,1.f,1.f}, { .5, .5 } },
+			{ {  3.f,  .0f, -2.f}, {1.f,1.f,1.f}, { 1, .5 } },
+			{ { -3.f, -3.f, -2.f}, {1.f,1.f,1.f}, { 0, 1 } },
+			{ {  .0f, -3.f, -2.f}, {1.f,1.f,1.f}, { .5, 1 } },
+			{ {  3.f, -3.f, -2.f}, {1.f,1.f,1.f}, { 1, 1 } }
 		};
-
-		std::vector<uint32_t> indeces{ 0,1,2 };
+		std::vector<uint32_t> indices{
+			3, 0, 1, 1, 4, 3, 4, 1, 2,
+			2, 5, 4, 6, 3, 4, 4, 7, 6,
+			7, 4, 5, 5, 8, 7
+		};
 
 
 		Mesh* triangleMesh{};
+		Texture* Diffuse{};
 
+		Camera m_pCamera;
 
-		const FLOAT BackgroundColor[4] = { 0.f,0.f,0.f,0.f };
-
+		int samplerCount{};
 	};
 }

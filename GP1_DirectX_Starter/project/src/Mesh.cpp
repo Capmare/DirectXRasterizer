@@ -32,14 +32,15 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<ui
 	bd.MiscFlags = 0;
 	initData.pSysMem = indexData.data();
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pIndexBuffer);
+
 	if (FAILED(result)) return;
 
 }
 
-void Mesh::Render(ID3D11DeviceContext* pDeviceContex)
+void Mesh::Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj)
 {
 	pDeviceContex->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pDeviceContex->IASetInputLayout(m_pEffect->GetInputLayout());
+	pDeviceContex->IASetInputLayout(GetEffect()->GetInputLayout());
 
 	constexpr UINT stride = sizeof(Vertex);
 	constexpr UINT offset = 0;
@@ -48,14 +49,14 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContex)
 	pDeviceContex->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	D3DX11_TECHNIQUE_DESC techDesc{};
-	m_pEffect->GetTechnique()->GetDesc(&techDesc);
+	GetEffect()->GetTechnique()->GetDesc(&techDesc);
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContex);
+		GetEffect()->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContex);
 		pDeviceContex->DrawIndexed(m_NumIndeces, 0, 0);
 	}
-
-
+	
+	GetEffect()->SetMatrix( reinterpret_cast<const float*>(&viewProj));
 }
 
 Mesh::~Mesh()
@@ -68,9 +69,9 @@ Mesh::~Mesh()
 	{
 		m_pVertexBuffer->Release();
 	}
-	if (m_pEffect)
+	if (GetEffect())
 	{
-		delete m_pEffect;
+		delete GetEffect();
 	}
 	
 }

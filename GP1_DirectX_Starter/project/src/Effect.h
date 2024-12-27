@@ -1,5 +1,7 @@
 #pragma once
 #include "pch.h"
+#include "Matrix.h"
+#include "Texture.h"
 
 
 class Effect
@@ -17,16 +19,22 @@ public:
 	//static ID3DX11Effect* GetCurrentEffect() const { return m_pCurrentEffect; }
 
 	static ID3DX11Effect* LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile);
+	
+	void SetDiffuseMap(Texture* pDiffuseTexture);
 
 	ID3DX11EffectTechnique* GetTechnique() const { return m_pTechnique; }
 	ID3D11InputLayout* GetInputLayout() const { return m_pInputLayout; }
+
+	void SetMatrix(const float* m);
 private:
 	
+
 	ID3D11Device* m_pDevice;
 	ID3DX11Effect* m_pCurrentEffect;
 	ID3DX11EffectTechnique* m_pTechnique;
 	ID3D11InputLayout* m_pInputLayout;
-
+	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable;
+	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable;
 };
 
 

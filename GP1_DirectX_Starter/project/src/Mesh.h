@@ -1,12 +1,16 @@
 #pragma once
 #include "pch.h"
+#include "Math.h"
 
 class Effect;
 
 
 struct Vertex {
-	XMFLOAT3  position;
-	XMFLOAT3  color;
+	Vector3	position;
+	Vector3	color;
+	Vector2	uv;
+	Vector3 normal; 
+	Vector3 tangent; 
 };
 
 class Mesh
@@ -21,12 +25,22 @@ public:
 	Mesh& operator=(const Mesh&) = delete;
 	Mesh& operator=(Mesh&&) noexcept = delete;
 
-	void Render(ID3D11DeviceContext*  pDeviceContex);
-
+	void Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj);
+	Matrix GetWorldmatrix() const { return m_Worldmatrix; }
+	Effect* GetEffect() const { return m_pEffect; }
 private:
 	Effect* m_pEffect;
 	ID3D11Buffer* m_pVertexBuffer;
 	ID3D11Buffer* m_pIndexBuffer;
+
+	Matrix m_Worldmatrix
+	{
+		Vector4{1,0,0,0},
+		Vector4{0,1,0,0},
+		Vector4{0,0,1,0},
+		Vector4{0,0,0,1}
+	};
+
 
 	uint32_t m_NumIndeces;
 };

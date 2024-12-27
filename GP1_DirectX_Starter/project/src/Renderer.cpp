@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Renderer.h"
+#include "Utils.h"
+#include "Effect.h"
 
 namespace dae {
 
@@ -15,16 +17,27 @@ namespace dae {
 		{
 			m_IsInitialized = true;
 			std::cout << "DirectX is initialized and ready!\n";
+
+			m_pCamera.Initialize(45.f, Vector3{ 0.f,0.f,-10.f });
 		}
 		else
 		{
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		m_pCamera.aspectRatio = (float)m_Width / (float)m_Height;
+
+
+
 	}
 
 	Renderer::~Renderer()
 	{
 		// order of release matters, has to be inverse of initialization
+		if (Diffuse)
+		{
+			delete Diffuse;
+		}
 		if (m_pRenderTargetView)
 		{
 			m_pRenderTargetView->Release();
@@ -68,7 +81,7 @@ namespace dae {
 
 	void Renderer::Update(const Timer* pTimer)
 	{
-		
+		m_pCamera.Update(pTimer);
 	}
 
 
@@ -77,15 +90,44 @@ namespace dae {
 		if (!m_IsInitialized)
 			return;
 
-		// clear back buffer
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, BackgroundColor);
+		//// clear back buffer
+		constexpr float color[4] = { 0.f,0.f,0.3f,1.f };
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
-
-		triangleMesh->Render(m_pDeviceContext);
-
+		
+		triangleMesh->Render(m_pDeviceContext, triangleMesh->GetWorldmatrix() * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
 
+	}
+
+
+	void Renderer::ChangeToNextSampler()
+	{
+		D3D11_FILTER currentFilter{};
+
+		if (samplerCount == 0)
+		{
+			currentFilter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; 
+
+		}
+		if (samplerCount == 1)
+		{
+			currentFilter = D3D11_FILTER_ANISOTROPIC;
+
+		}
+		if (samplerCount == 2)
+		{
+			currentFilter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+
+		}
+
+		if (samplerCount == 2)
+		{
+			samplerCount = 0; 
+			return;
+		}
+		++samplerCount;
 	}
 
 	HRESULT Renderer::InitializeDirectX()
@@ -180,20 +222,26 @@ namespace dae {
 
 		m_pDeviceContext->RSSetViewports(1, &viewport);
 
-		//clear RTV and DSV
-		constexpr float color[4] = { 0.f,0.f,0.3f,1.f };
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
+		// Utils::ParseOBJ("resources/vehicle.obj", vertices, indices);
 
 		triangleMesh = new Mesh(
 			m_pDevice,
 			vertices,
-			indeces
+			indices
 		);
 
+		Diffuse = Texture::LoadFromFile(m_pDevice, "resources/uv_grid_2.png");
+		triangleMesh->GetEffect()->SetDiffuseMap(Diffuse);
 
 
+
+
+
+		//// Update and bind sampler state dynamically during runtime
+
+
+		//Diffuse->UpdateSamplerState(m_pDeviceContext, m_pDevice, D3D11_FILTER_ANISOTROPIC);
 
 		return S_OK;
 	}
