@@ -38,6 +38,18 @@ namespace dae {
 		{
 			delete Diffuse;
 		}
+		if (Specular)
+		{
+			delete Specular;
+		}
+		if (Gloss)
+		{
+			delete Gloss;
+		}
+		if (Normal)
+		{
+			delete Normal;
+		}
 		if (m_pRenderTargetView)
 		{
 			m_pRenderTargetView->Release();
@@ -94,7 +106,8 @@ namespace dae {
 		constexpr float color[4] = { 0.f,0.f,0.3f,1.f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
-		
+		triangleMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
+
 		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
@@ -224,7 +237,6 @@ namespace dae {
 
 		m_pDeviceContext->RSSetViewports(1, &viewport);
 
-
 		Utils::ParseOBJ("resources/vehicle.obj", vertices, indices);
 
 		triangleMesh = new Mesh(
@@ -234,16 +246,14 @@ namespace dae {
 		);
 
 		Diffuse = Texture::LoadFromFile(m_pDevice, "resources/vehicle_diffuse.png");
+		Specular = Texture::LoadFromFile(m_pDevice, "resources/vehicle_specular.png");
+		Gloss = Texture::LoadFromFile(m_pDevice, "resources/vehicle_gloss.png");
+		Normal = Texture::LoadFromFile(m_pDevice, "resources/vehicle_normal.png");
+
 		triangleMesh->GetEffect()->SetDiffuseMap(Diffuse);
-
-
-
-
-
-		//// Update and bind sampler state dynamically during runtime
-
-
-		//Diffuse->UpdateSamplerState(m_pDeviceContext, m_pDevice, D3D11_FILTER_ANISOTROPIC);
+		triangleMesh->GetEffect()->SetGlossMap(Gloss);
+		triangleMesh->GetEffect()->SetSpecularMap(Specular);
+		triangleMesh->GetEffect()->SetNormalMap(Normal);
 
 		return S_OK;
 	}

@@ -65,6 +65,9 @@ namespace dae
 
 		Mesh* triangleMesh{};
 		Texture* Diffuse{};
+		Texture* Specular{};
+		Texture* Gloss{};
+		Texture* Normal{};
 
 		Camera m_pCamera;
 

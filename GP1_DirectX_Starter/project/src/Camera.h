@@ -19,9 +19,9 @@ namespace dae {
 		};
 
 		float aspectRatio{ 1 };
+		Vector3 origin{};
 
 	private:
-		Vector3 origin{};
 		float fovAngle{ 90.f };
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
 
@@ -34,8 +34,8 @@ namespace dae {
 		float totalPitch{};
 		float totalYaw{};
 
-		float movementSpeed{ 3 };
-		float mouseSensivity{ 3 };
+		float movementSpeed{ 10 };
+		float mouseSensivity{ 10 };
 
 		float zn{ 1.f };
 		float zf{ 1000.f };

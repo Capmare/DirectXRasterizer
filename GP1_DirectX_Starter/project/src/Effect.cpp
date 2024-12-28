@@ -11,7 +11,7 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 	}
 
 	// vertex layout
-	static constexpr uint32_t numElements{ 3 };
+	static constexpr uint32_t numElements{ 5 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
@@ -28,6 +28,19 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
 	vertexDesc[2].AlignedByteOffset = 24;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[3].SemanticName = "NORMAL";
+	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[3].AlignedByteOffset = 32;
+	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[4].SemanticName = "TANGENT";
+	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[4].AlignedByteOffset = 44;
+	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+
 
 
 	// create input layout
@@ -58,14 +71,35 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 
 	}
 
+	m_pSpecularMapVariable = m_pCurrentEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
+	if (!m_pSpecularMapVariable->IsValid())
+	{
+		std::wcout << L"m_pSpecularMapVariable not valid";
+
+	}
+	
+	m_pGlossinessMapVariable = m_pCurrentEffect->GetVariableByName("gGlossinessMap")->AsShaderResource();
+	if (!m_pGlossinessMapVariable->IsValid())
+	{
+		std::wcout << L"m_pGlossinessMapVariable not valid";
+
+	}
+
+	m_pNormalMapVariable = m_pCurrentEffect->GetVariableByName("gNormalMap")->AsShaderResource();
+	if (!m_pNormalMapVariable->IsValid())
+	{
+		std::wcout << L"m_pNormalMapVariable not valid";
+
+	}
+
 	m_pSamplerVariable = m_pCurrentEffect->GetVariableByName("gSamplerState")->AsSampler();
 	if (!m_pSamplerVariable->IsValid())
 	{
 		std::wcout << L"m_pSamplerState not valid";
 
 	}
-	
-	
+	m_pWorldMatrix = m_pCurrentEffect->GetVariableByName("gWorldMatrix")->AsMatrix();
+	m_pCameraPosition = m_pCurrentEffect->GetVariableByName("gCameraPosition")->AsVector();
 
 	
 
@@ -74,6 +108,14 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 
 Effect::~Effect()
 {
+	if (m_pSamplerVariable)
+	{
+		m_pSamplerVariable->Release();
+	}
+	if (m_pWorldMatrix)
+	{
+		m_pWorldMatrix->Release();
+	}
 	if (m_pSamplerState)
 	{
 		m_pSamplerState->Release();
@@ -81,6 +123,18 @@ Effect::~Effect()
 	if (m_pSamplerVariable)
 	{
 		m_pSamplerVariable->Release();
+	}
+	if (m_pNormalMapVariable)
+	{
+		m_pNormalMapVariable->Release();
+	}
+	if (m_pGlossinessMapVariable)
+	{
+		m_pGlossinessMapVariable->Release();
+	}
+	if (m_pSpecularMapVariable)
+	{
+		m_pSpecularMapVariable->Release();
 	}
 	if (m_pDiffuseMapVariable)
 	{
@@ -165,6 +219,38 @@ void Effect::SetDiffuseMap(Texture* pDiffuseTexture)
 	if (m_pDiffuseMapVariable)
 	{
 		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
+	}
+}
+
+void Effect::SetGlossMap(Texture* pGlossTexture)
+{
+	if (m_pGlossinessMapVariable)
+	{
+		m_pGlossinessMapVariable->SetResource(pGlossTexture->GetSRV());
+	}
+}
+
+void Effect::SetSpecularMap(Texture* pSpecularTexture)
+{
+	if (m_pSpecularMapVariable)
+	{
+		m_pSpecularMapVariable->SetResource(pSpecularTexture->GetSRV());
+	}
+}
+
+void Effect::SetNormalMap(Texture* pNormalTexture)
+{
+	if (m_pNormalMapVariable)
+	{
+		m_pNormalMapVariable->SetResource(pNormalTexture->GetSRV());
+	}
+}
+
+void Effect::SetCameraPosition(const float* pData)
+{
+	if (m_pCameraPosition)
+	{
+		m_pCameraPosition->SetFloatVector(pData);
 	}
 }
 
