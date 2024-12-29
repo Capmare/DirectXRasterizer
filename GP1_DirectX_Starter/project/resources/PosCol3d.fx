@@ -49,20 +49,20 @@ float4x3 SampleTextures(VS_OUTPUT input){
 	return output;
 };
 
-float Remap(float value, float istart, float istop, float ostart, float ostop)
+float3 CalculateSpecular(VS_INPUT input)
 {
-	return (value - istart) / (istop - istart) * (ostop - ostart) + ostart;
-}
+
+	return float3(0,0,0);
+};
 
 // vertex shader
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
 	output.position = mul(float4(input.position,1.f),gWorldViewProj);
-	output.worldPosition = mul(float4(input.position, 1.0f), gWorldMatrix);
 	output.uv = input.uv;
-	output.normal = mul(input.normal,(float3x3)gWorldMatrix);
-	output.tangent = mul(input.tangent,(float3x3)gWorldMatrix);
+	output.normal = input.normal;
+	output.tangent = input.tangent;
 	return output;
 }
 
@@ -71,29 +71,25 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
 	float invViewDirection = normalize(gCameraPosition - input.worldPosition.xyz);
 	
+
 	float4x3 sampledTexture = SampleTextures(input);
 	
 	float3 sampledDiffuse = sampledTexture[0];
 	float3 sampledSpecular = sampledTexture[1];
 	float3 sampledGlossiness = sampledTexture[2];
-	float3 sampledNormal = 2 * sampledTexture[3] - 1; // change to -1 1 range
+	float3 sampledNormal = sampledTexture[3];
 
-	const float3 binormal = cross(input.normal,input.tangent);
-	const float4x4 tangentSpaceAxis = {float4(input.tangent,0.f),float4(binormal,0.f),float4(input.normal,0),float4(0,0,0,1)};
-	sampledNormal = mul(sampledNormal,(float3x3)tangentSpaceAxis);
+	float cosA = max(0.0f,dot(gLightDirection,sampledNormal));
 
-	float depth = Remap(clamp(input.position.z,0.888f,1.f), .888f, 1.f, .0f, 1.f);
-	float cosA = max(0.0f,dot(-gLightDirection,sampledNormal));
+	const float3 reflect = gLightDirection - 2* dot(sampledNormal,gLightDirection) * sampledNormal;
+	const float phongCosA = max(0.0f,dot(invViewDirection, reflect) );
+	const float3 PhongSpec = sampledSpecular *  pow(phongCosA,sampledGlossiness.r * Shininess);
 
-	const float3 r = normalize(reflect(gLightDirection,sampledNormal));
-	const float phongCosA = max(0.f,dot(invViewDirection, r) );
-	const float3 PhongSpec = sampledSpecular * pow(phongCosA,sampledGlossiness.r * Shininess);
 	float3 lambertDiffuse = sampledDiffuse * 7.0f / PI;
  
 	float3 finalColor = (lambertDiffuse + PhongSpec + float3(0.025f,0.025f,0.025f));
 	finalColor *= cosA;
-	finalColor = saturate(finalColor);
-	return float4(finalColor,0.f);
+	return float4(finalColor,1.f);
 }
 
 technique11 DefaultTechnique

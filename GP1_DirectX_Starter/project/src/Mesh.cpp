@@ -33,8 +33,6 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<ui
 	initData.pSysMem = indexData.data();
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pIndexBuffer);
 
-	m_pEffect->SetWorldPosition(reinterpret_cast<const float*>(&m_Worldmatrix));
-
 	if (FAILED(result)) return;
 
 }

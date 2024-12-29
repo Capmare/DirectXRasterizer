@@ -94,10 +94,6 @@ namespace dae {
 	void Renderer::Update(const Timer* pTimer)
 	{
 		m_pCamera.Update(pTimer);
-
-		triangleMesh->m_Worldmatrix = Matrix::CreateRotationY(PI * pTimer->GetTotal() / 25);
-		triangleMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
-
 	}
 
 
@@ -110,9 +106,9 @@ namespace dae {
 		constexpr float color[4] = { 0.f,0.f,0.3f,1.f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
+		triangleMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
 
 		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
-
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
 
