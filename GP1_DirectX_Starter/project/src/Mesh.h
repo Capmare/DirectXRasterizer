@@ -2,15 +2,24 @@
 #include "pch.h"
 #include "Math.h"
 
-class Effect;
 
+
+class Effect;
 
 struct Vertex {
 	Vector3	position;
 	Vector3	color;
 	Vector2	uv;
-	Vector3 normal; 
-	Vector3 tangent; 
+	Vector3 normal;
+	Vector3 tangent;
+
+	Vector3 viewDirection{}; // only for cpu
+};
+
+enum class PrimitiveTopology
+{
+	TriangleList,
+	TriangleStrip
 };
 
 class Mesh
@@ -19,7 +28,7 @@ public:
 	Mesh();
 	Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData);
 	~Mesh();
-	
+
 	Mesh(const Mesh&) = delete;
 	Mesh(Mesh&&) noexcept = delete;
 	Mesh& operator=(const Mesh&) = delete;
@@ -35,6 +44,9 @@ public:
 		Vector4{0,0,1,0},
 		Vector4{0,0,0,1}
 	};
+
+	PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };
+
 private:
 	Effect* m_pEffect;
 	ID3D11Buffer* m_pVertexBuffer;

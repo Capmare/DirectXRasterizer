@@ -6,6 +6,8 @@
 #include "Math.h"
 #include "Timer.h"
 
+#include <algorithm>
+
 namespace dae {
 	class Camera
 	{
@@ -21,28 +23,29 @@ namespace dae {
 		float aspectRatio{ 1 };
 		Vector3 origin{};
 
+		Vector3 forward{ Vector3::UnitZ };
+
 	private:
 		float fovAngle{ 90.f };
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
 
+		Matrix invViewMatrix{};
+		Matrix viewMatrix{};
+		Matrix ProjectionMatrix{};
 
-
-		Vector3 forward{ Vector3::UnitZ };
 		Vector3 up{ Vector3::UnitY };
 		Vector3 right{ Vector3::UnitX };
+
 
 		float totalPitch{};
 		float totalYaw{};
 
 		float movementSpeed{ 10 };
-		float mouseSensivity{ 10 };
+		float mouseSensivity{ 5 };
 
 		float zn{ 1.f };
 		float zf{ 1000.f };
 
-		Matrix invViewMatrix{};
-		Matrix viewMatrix{};
-		Matrix ProjectionMatrix{};
 
 	public:
 		Matrix GetViewMatrix() const { return viewMatrix; }

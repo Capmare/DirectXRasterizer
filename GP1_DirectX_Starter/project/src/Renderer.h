@@ -2,27 +2,36 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "DataTypes.h"
 
 struct SDL_Window;
 struct SDL_Surface;
 
 namespace dae
 {
-	class Renderer final
+
+
+
+	class DirectXRenderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow);
-		~Renderer();
+		DirectXRenderer(SDL_Window* pWindow);
+		~DirectXRenderer();
 
-		Renderer(const Renderer&) = delete;
-		Renderer(Renderer&&) noexcept = delete;
-		Renderer& operator=(const Renderer&) = delete;
-		Renderer& operator=(Renderer&&) noexcept = delete;
+		DirectXRenderer(const DirectXRenderer&) = delete;
+		DirectXRenderer(DirectXRenderer&&) noexcept = delete;
+		DirectXRenderer& operator=(const DirectXRenderer&) = delete;
+		DirectXRenderer& operator=(DirectXRenderer&&) noexcept = delete;
 
 		void Update(const Timer* pTimer);
 		void Render() const;
 
 		void ChangeToNextSampler();
+
+		void ToggleRotate() const {};
+		Camera m_pCamera;
+
+
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -42,6 +51,7 @@ namespace dae
 
 		//DIRECTX
 		HRESULT InitializeDirectX();
+
 		//...
 
 		
@@ -69,7 +79,6 @@ namespace dae
 		Texture* Gloss{};
 		Texture* Normal{};
 
-		Camera m_pCamera;
 
 		int samplerCount{};
 	};

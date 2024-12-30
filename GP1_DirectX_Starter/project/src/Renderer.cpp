@@ -5,7 +5,7 @@
 
 namespace dae {
 
-	Renderer::Renderer(SDL_Window* pWindow) :
+	DirectXRenderer::DirectXRenderer(SDL_Window* pWindow) :
 		m_pWindow(pWindow)
 	{
 		//Initialize
@@ -18,7 +18,7 @@ namespace dae {
 			m_IsInitialized = true;
 			std::cout << "DirectX is initialized and ready!\n";
 
-			m_pCamera.Initialize(45.f, Vector3{ 0.f,0.f,-50.f });
+			m_pCamera.Initialize(60.f, Vector3{ 0.f,0.f,-50.f });
 		}
 		else
 		{
@@ -31,7 +31,7 @@ namespace dae {
 
 	}
 
-	Renderer::~Renderer()
+	DirectXRenderer::~DirectXRenderer()
 	{
 		// order of release matters, has to be inverse of initialization
 		if (Diffuse)
@@ -91,7 +91,7 @@ namespace dae {
 		}
 	}
 
-	void Renderer::Update(const Timer* pTimer)
+	void DirectXRenderer::Update(const Timer* pTimer)
 	{
 		m_pCamera.Update(pTimer);
 
@@ -100,7 +100,7 @@ namespace dae {
 	}
 
 
-	void Renderer::Render() const
+	void DirectXRenderer::Render() const
 	{
 		if (!m_IsInitialized)
 			return;
@@ -112,15 +112,16 @@ namespace dae {
 
 		triangleMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
 
-		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix() );
+		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix());
 
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
+		
 
 	}
 
 
-	void Renderer::ChangeToNextSampler()
+	void DirectXRenderer::ChangeToNextSampler()
 	{
 		D3D11_FILTER currentFilter{};
 
@@ -150,7 +151,7 @@ namespace dae {
 		++samplerCount;
 	}
 
-	HRESULT Renderer::InitializeDirectX()
+	HRESULT DirectXRenderer::InitializeDirectX()
 	{
 
 		// Create Device and DC
@@ -263,4 +264,5 @@ namespace dae {
 
 		return S_OK;
 	}
+
 }
