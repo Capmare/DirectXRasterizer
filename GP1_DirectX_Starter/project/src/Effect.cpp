@@ -99,7 +99,16 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 
 	}
 	m_pWorldMatrix = m_pCurrentEffect->GetVariableByName("gWorldMatrix")->AsMatrix();
+	if (!m_pWorldMatrix)
+	{
+		std::wcout << L"m_pWorldMatrix not valid";
+
+	}
 	m_pCameraPosition = m_pCurrentEffect->GetVariableByName("gCameraPosition")->AsVector();
+	if (!m_pCameraPosition)
+	{
+		std::wcout << L"m_pCameraPosition not valid";
+	}
 
 	
 
@@ -250,7 +259,15 @@ void Effect::SetCameraPosition(const float* pData)
 {
 	if (m_pCameraPosition)
 	{
-		m_pCameraPosition->SetFloatVector(pData);
+		m_pCameraPosition->SetRawValue(pData,0,12);
+	}
+}
+
+void Effect::SetWorldPosition(const float* pData)
+{
+	if (m_pWorldMatrix)
+	{
+		m_pWorldMatrix->SetMatrix(pData);
 	}
 }
 

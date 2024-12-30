@@ -25,6 +25,7 @@ public:
 	void SetSpecularMap(Texture* pSpecularTexture);
 	void SetNormalMap(Texture* pNormalTexture);
 	void SetCameraPosition(const float* pData);
+	void SetWorldPosition(const float* pData);
 
 	ID3DX11EffectTechnique* GetTechnique() const { return m_pTechnique; }
 	ID3D11InputLayout* GetInputLayout() const { return m_pInputLayout; }
