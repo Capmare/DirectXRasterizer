@@ -22,7 +22,6 @@ SamplerState gSamplerState
 struct VS_INPUT
 {
 	float3 position : POSITION;
-	float3 color : COLOR;
 	float2 uv : UV;
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
@@ -49,51 +48,69 @@ float4x3 SampleTextures(VS_OUTPUT input){
 	return output;
 };
 
-float Remap(float value, float istart, float istop, float ostart, float ostop)
+float3 CalculateSpecular(VS_INPUT input)
 {
-	return (value - istart) / (istop - istart) * (ostop - ostart) + ostart;
-}
+
+	return float3(0,0,0);
+};
 
 // vertex shader
 VS_OUTPUT VS(VS_INPUT input)
 {
-	VS_OUTPUT output = (VS_OUTPUT)0;
-	output.position = mul(float4(input.position,1.f),gWorldViewProj);
-	output.worldPosition = mul(float4(input.position, 1.0f), gWorldMatrix);
-	output.uv = input.uv;
-	output.normal = mul(input.normal,(float3x3)gWorldMatrix);
-	output.tangent = mul(input.tangent,(float3x3)gWorldMatrix);
-	return output;
+	VS_OUTPUT output = (VS_OUTPUT) 0;
+    output.position	= mul(float4(input.position, 1.f), gWorldViewProj);
+    output.worldPosition = mul(float4(input.position, 1.f), gWorldMatrix);
+    output.uv = input.uv;
+    output.normal = mul(float4(input.normal , 0.f), gWorldMatrix).xyz;
+    output.tangent = mul(float4(input.tangent, 0.f), gWorldMatrix).xyz;
+    
+    return output;
 }
+
+float3 CalculateLambertDiffuse(VS_OUTPUT input)
+{
+    float3 colorDiffuse = gDiffuseMap.Sample(gSamplerState, input.uv).xyz;
+    return (LightIntesity * colorDiffuse / PI);
+}
+
+float3 CalculateSampledNormal(VS_OUTPUT input)
+{
+    const float3 sampledNormal = 2 * gNormalMap.Sample(gSamplerState, input.uv).xyz - float3(1, 1, 1);
+    const float3 binormal = cross(input.normal, input.tangent);
+    
+    float4x4 tangentSpaceAxis = (float4x4) 0;
+    tangentSpaceAxis[0] = float4(input.tangent, 0.f);
+    tangentSpaceAxis[1] = float4(binormal, 0.f);
+    tangentSpaceAxis[2] = float4(input.normal, 0.f);
+    tangentSpaceAxis[3] = float4((float3) 0, 1.f);
+
+    return mul(float4(sampledNormal, 0.f), tangentSpaceAxis).xyz;
+}
+
+float3 CalculatePhong(VS_OUTPUT input, float3 viewDirection, float3 normal)
+{
+    const float3 ref        = -normalize(reflect(gLightDirection, normal));
+    const float  cos      = max(dot(ref, viewDirection), 0.f);
+    const float3 specular = gSpecularMap.Sample(gSamplerState, input.uv).xyz;
+    const float  gloss    = gGlossinessMap.Sample(gSamplerState, input.uv).r;
+    
+    return specular * pow(cos, gloss * Shininess);
+}
+
+
 
 // pixel shader
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	float invViewDirection = normalize(gCameraPosition - input.worldPosition.xyz);
-	
-	float4x3 sampledTexture = SampleTextures(input);
-	
-	float3 sampledDiffuse = sampledTexture[0];
-	float3 sampledSpecular = sampledTexture[1];
-	float3 sampledGlossiness = sampledTexture[2];
-	float3 sampledNormal = 2 * sampledTexture[3] - 1; // change to -1 1 range
+	float3 invViewDirection = normalize(input.worldPosition.xyz - gCameraPosition);
 
-	const float3 binormal = cross(input.normal,input.tangent);
-	const float4x4 tangentSpaceAxis = {float4(input.tangent,0.f),float4(binormal,0.f),float4(input.normal,0),float4(0,0,0,1)};
-	sampledNormal = mul(sampledNormal,(float3x3)tangentSpaceAxis);
+	const float3 lambertDiffuse = CalculateLambertDiffuse(input);
+	const float3 normal = CalculateSampledNormal(input);
+	const float3 phong = CalculatePhong(input,invViewDirection,normal);
+	const float cosA = max(dot(-gLightDirection,normal),0.f);
 
-	float depth = Remap(clamp(input.position.z,0.888f,1.f), .888f, 1.f, .0f, 1.f);
-	float cosA = max(0.0f,dot(-gLightDirection,sampledNormal));
-
-	const float3 r = normalize(reflect(gLightDirection,sampledNormal));
-	const float phongCosA = max(0.f,dot(invViewDirection, r) );
-	const float3 PhongSpec = sampledSpecular * pow(phongCosA,sampledGlossiness.r * Shininess);
-	float3 lambertDiffuse = sampledDiffuse * 7.0f / PI;
- 
-	float3 finalColor = (lambertDiffuse + PhongSpec + float3(0.025f,0.025f,0.025f));
-	finalColor *= cosA;
-	finalColor = saturate(finalColor);
-	return float4(finalColor,0.f);
+	const float3 finalColor = (lambertDiffuse + phong + float3(0.025f,0.025f,0.025f) * cosA);
+	return float4(finalColor,1.f);
 }
 
 technique11 DefaultTechnique
