@@ -28,8 +28,11 @@ namespace dae
 
 		void ChangeToNextSampler();
 
-		void ToggleRotate() const {};
+		void ToggleRotate() { m_bRotate = !m_bRotate; };
 		Camera m_pCamera;
+
+		float currentRotTime{};
+		bool m_bRotate;
 
 
 	private:
@@ -72,12 +75,20 @@ namespace dae
 			7, 4, 5, 5, 8, 7
 		};
 
+		std::vector<Vertex> fireVertices{};
+		std::vector<uint32_t> fireIndices{};
+
 
 		Mesh* triangleMesh{};
+		Mesh* fireMesh{};
+
 		Texture* Diffuse{};
 		Texture* Specular{};
 		Texture* Gloss{};
 		Texture* Normal{};
+
+		Texture* FireDiffuse{};
+
 
 
 		int samplerCount{};

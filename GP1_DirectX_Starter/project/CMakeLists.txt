@@ -12,7 +12,8 @@ set(SOURCES
     "src/Mesh.cpp"
     "src/Texture.cpp"
     "src/CPURenderer.cpp"
-)
+    "src/BaseEffectClass.cpp"
+    "src/VFXEffect.cpp")
 
 # Create the executable
 add_executable(${PROJECT_NAME} ${SOURCES} "src/Camera.h" "src/DataTypes.h")

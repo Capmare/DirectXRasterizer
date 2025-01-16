@@ -28,12 +28,17 @@ namespace dae {
 		m_pCamera.aspectRatio = (float)m_Width / (float)m_Height;
 		
 		triangleMesh->m_Worldmatrix *= Matrix::CreateRotationY(PI);
+		fireMesh->m_Worldmatrix *= Matrix::CreateRotationY(PI);
 
 	}
 
 	DirectXRenderer::~DirectXRenderer()
 	{
 		// order of release matters, has to be inverse of initialization
+		if (FireDiffuse)
+		{
+			delete FireDiffuse;
+		}
 		if (Diffuse)
 		{
 			delete Diffuse;
@@ -85,6 +90,10 @@ namespace dae {
 		{
 			m_pDevice->Release();
 		}
+		if (fireMesh)
+		{
+			delete fireMesh;
+		}
 		if (triangleMesh)
 		{
 			delete triangleMesh;
@@ -95,7 +104,14 @@ namespace dae {
 	{
 		m_pCamera.Update(pTimer);
 
-		triangleMesh->m_Worldmatrix = Matrix::CreateRotationY(PI * pTimer->GetTotal() / 25);
+		triangleMesh->m_Worldmatrix = Matrix::CreateRotationY(PI * currentRotTime / 25);
+		fireMesh->m_Worldmatrix = Matrix::CreateRotationY(PI * currentRotTime / 25);
+
+		if (m_bRotate)
+		{
+			currentRotTime += pTimer->GetElapsed();			
+		}
+		
 		
 	}
 
@@ -111,8 +127,10 @@ namespace dae {
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
 
 		triangleMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
+		fireMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
 
 		triangleMesh->Render(m_pDeviceContext, triangleMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix());
+		fireMesh->Render(m_pDeviceContext, fireMesh->m_Worldmatrix * m_pCamera.GetViewMatrix() * m_pCamera.GetProjectionMatrix());
 
 		// switch the back buffer and front buffer
 		m_SwapChain->Present(0, 0);
@@ -243,12 +261,22 @@ namespace dae {
 
 		m_pDeviceContext->RSSetViewports(1, &viewport);
 
+
 		Utils::ParseOBJ("resources/vehicle.obj", vertices, indices);
+		Utils::ParseOBJ("resources/fireFX.obj", fireVertices, fireIndices);
 
 		triangleMesh = new Mesh(
 			m_pDevice,
 			vertices,
-			indices
+			indices,
+			ShaderType::Diffuse
+		);
+
+		fireMesh = new Mesh(
+			m_pDevice,
+			fireVertices,
+			fireIndices, 
+			ShaderType::VFX
 		);
 
 		Diffuse = Texture::LoadFromFile(m_pDevice, "resources/vehicle_diffuse.png");
@@ -260,6 +288,10 @@ namespace dae {
 		triangleMesh->GetEffect()->SetGlossMap(Gloss);
 		triangleMesh->GetEffect()->SetSpecularMap(Specular);
 		triangleMesh->GetEffect()->SetNormalMap(Normal);
+
+		FireDiffuse = Texture::LoadFromFile(m_pDevice, "resources/fireFX_diffuse.png");
+		
+		fireMesh->GetEffect()->SetDiffuseMap(FireDiffuse);
 
 
 		return S_OK;

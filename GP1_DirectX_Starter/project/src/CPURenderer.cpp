@@ -56,9 +56,11 @@ SoftwareRenderer::~SoftwareRenderer()
 void SoftwareRenderer::Update(Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
+	mesh.worldMatrix = Matrix::CreateRotationY(PI * currentRotTime / 25);
+
 	if (m_bRotate)
 	{
-		mesh.worldMatrix = Matrix::CreateRotationY(PI * pTimer->GetTotal() / 25);
+		currentRotTime += pTimer->GetElapsed();
 	}
 }
 

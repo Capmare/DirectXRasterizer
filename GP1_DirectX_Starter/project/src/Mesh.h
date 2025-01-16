@@ -4,7 +4,7 @@
 
 
 
-class Effect;
+class BaseEffectClass;
 
 struct Vertex {
 	Vector3	position;
@@ -22,11 +22,16 @@ enum class PrimitiveTopology
 	TriangleStrip
 };
 
+enum class ShaderType{
+	Diffuse,
+	VFX
+};
+
 class Mesh
 {
 public:
 	Mesh();
-	Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData);
+	Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData, ShaderType shaderType);
 	~Mesh();
 
 	Mesh(const Mesh&) = delete;
@@ -35,7 +40,7 @@ public:
 	Mesh& operator=(Mesh&&) noexcept = delete;
 
 	void Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj);
-	Effect* GetEffect() const { return m_pEffect; }
+	BaseEffectClass* GetEffect() const { return m_pEffect; }
 
 	Matrix m_Worldmatrix
 	{
@@ -47,13 +52,12 @@ public:
 
 	PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };
 
+	ShaderType shader{};
 private:
-	Effect* m_pEffect;
-	ID3D11Buffer* m_pVertexBuffer;
-	ID3D11Buffer* m_pIndexBuffer;
+	BaseEffectClass* m_pEffect{};
+	ID3D11Buffer* m_pVertexBuffer{};
+	ID3D11Buffer* m_pIndexBuffer{};
 
 
-
-
-	uint32_t m_NumIndeces;
+	uint32_t m_NumIndeces{};
 };

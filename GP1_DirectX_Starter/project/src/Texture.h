@@ -25,8 +25,8 @@ namespace dae
 		ID3D11Device* m_pDevice{};
 		SDL_Surface* m_pSurface{ nullptr };
 
-		ID3D11Texture2D* m_pResource;
-		ID3D11ShaderResourceView* m_pSRV;
+		ID3D11Texture2D* m_pResource{};
+		ID3D11ShaderResourceView* m_pSRV{};
 
 		uint32_t* m_pSurfacePixels{ nullptr };
 

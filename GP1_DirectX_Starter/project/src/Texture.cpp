@@ -48,8 +48,6 @@ namespace dae
 		{
 			m_pSurfacePixels = (uint32_t*)pSurface->pixels;
 		}
-		
-
 	}
 
 	Texture::~Texture()

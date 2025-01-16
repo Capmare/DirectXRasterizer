@@ -45,6 +45,8 @@ namespace dae
 
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		Camera m_Camera{};
+		float currentRotTime{};
+		bool m_bRotate{ true };
 
 	private:
 
@@ -65,13 +67,11 @@ namespace dae
 		Texture* m_pTextureSpecular{};
 
 
-
 		float* m_pDepthBufferPixels{};
 		const float m_Shininess{ 25.f };
 		int m_Width{};
 		int m_Height{};
 		bool m_bUseDepth{ false };
-		bool m_bRotate{ true };
 		bool m_bUseNormalMap{ true };
 	};
 }

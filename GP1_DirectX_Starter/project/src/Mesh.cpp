@@ -1,10 +1,22 @@
 #include "Mesh.h"
 #include "Effect.h"
+#include "VFXEffect.h"
+#include "BaseEffectClass.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData)
+Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData, ShaderType shaderType) : shader{shaderType}
 {
 
-	m_pEffect = new Effect(pDevice, L"resources/PosCol3d.fx");
+	switch (shader)
+	{
+	default:
+		break;
+	case ShaderType::Diffuse:
+		m_pEffect = reinterpret_cast<BaseEffectClass*>(new Effect(pDevice, L"resources/PosCol3d.fx"));
+		break;
+	case ShaderType::VFX:
+		m_pEffect = reinterpret_cast<BaseEffectClass*>(new VFXEffect(pDevice, L"resources/VFX.fx"));
+		break;
+	}
 
 	
 	HRESULT result;
@@ -42,7 +54,7 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<ui
 void Mesh::Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj)
 {
 	pDeviceContex->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pDeviceContex->IASetInputLayout(GetEffect()->GetInputLayout());
+	pDeviceContex->IASetInputLayout(m_pEffect->GetInputLayout());
 
 	constexpr UINT stride = sizeof(Vertex);
 	constexpr UINT offset = 0;
@@ -51,14 +63,14 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj)
 	pDeviceContex->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	D3DX11_TECHNIQUE_DESC techDesc{};
-	GetEffect()->GetTechnique()->GetDesc(&techDesc);
+	m_pEffect->GetTechnique()->GetDesc(&techDesc);
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		GetEffect()->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContex);
+		m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContex);
 		pDeviceContex->DrawIndexed(m_NumIndeces, 0, 0);
 	}
 	
-	GetEffect()->SetMatrix( reinterpret_cast<const float*>(&viewProj));
+	m_pEffect->SetMatrix( reinterpret_cast<const float*>(&viewProj));
 }
 
 Mesh::~Mesh()
@@ -71,9 +83,9 @@ Mesh::~Mesh()
 	{
 		m_pVertexBuffer->Release();
 	}
-	if (GetEffect())
+	if (m_pEffect)
 	{
-		delete GetEffect();
+		delete m_pEffect;
 	}
 	
 }

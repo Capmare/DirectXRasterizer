@@ -66,11 +66,20 @@ int main(int argc, char* args[])
 					{
 						pCPURenderer->m_Camera.origin = pRenderer->m_pCamera.origin;
 						pCPURenderer->m_Camera.forward = pRenderer->m_pCamera.forward;
+						pCPURenderer->currentRotTime = pRenderer->currentRotTime;
+						pCPURenderer->m_bRotate = pRenderer->m_bRotate;
+
 						bIsDirectX = false;
 					}
 					if (e.key.keysym.scancode == SDL_SCANCODE_F2)
 					{
 						pRenderer->ChangeToNextSampler();
+					}
+					if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					{
+						pRenderer->ToggleRotate();
+
+
 					}
 
 					break;
@@ -93,7 +102,8 @@ int main(int argc, char* args[])
 					{
 						pRenderer->m_pCamera.origin = pCPURenderer->m_Camera.origin;
 						pRenderer->m_pCamera.forward  = pCPURenderer->m_Camera.forward;
-
+						pRenderer->currentRotTime = pCPURenderer->currentRotTime;
+						pRenderer->m_bRotate = pCPURenderer->m_bRotate;
 						bIsDirectX = true;
 
 					}
