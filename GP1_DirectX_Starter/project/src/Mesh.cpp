@@ -3,6 +3,8 @@
 #include "VFXEffect.h"
 #include "BaseEffectClass.h"
 
+
+
 Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<uint32_t> indexData, ShaderType shaderType) : shader{shaderType}
 {
 
@@ -18,7 +20,9 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<ui
 		break;
 	}
 
-	
+	m_vertexData = vertexData;
+	m_indexData = indexData;
+
 	HRESULT result;
 
 	// create vertex buffer

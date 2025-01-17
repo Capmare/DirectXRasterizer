@@ -12,6 +12,12 @@ float PI = 3.14159;
 float LightIntesity = 7.0f;
 float Shininess = 25.0f;
 
+RasterizerState gCullingMode
+{
+    FrontCounterClockwise = FALSE;
+};
+
+
 SamplerState gSamplerState
 {
     Filter = MIN_MAG_MIP_LINEAR;
@@ -102,6 +108,7 @@ technique11 DefaultTechnique
 {
     pass P0
     {
+        SetRasterizerState(gCullingMode);
         SetDepthStencilState(gDepthStencilState, 0);
         SetVertexShader(CompileShader(vs_5_0, VS()));
         SetGeometryShader(NULL);

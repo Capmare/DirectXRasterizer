@@ -104,6 +104,7 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& effectAsset)
 	
 
 
+
 }
 
 Effect::~Effect()

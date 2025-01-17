@@ -10,13 +10,22 @@ BaseEffectClass::BaseEffectClass()
 BaseEffectClass::~BaseEffectClass()
 {
 
-	if (m_pSamplerVariable)
+
+	if (m_pRasterizerState)
 	{
-		m_pSamplerVariable->Release();
+		m_pRasterizerState->Release();
 	}
 	if (m_pSamplerState)
 	{
 		m_pSamplerState->Release();
+	}
+	if (m_pRasterizerVariable)
+	{
+		m_pRasterizerVariable->Release();
+	}
+	if (m_pSamplerVariable)
+	{
+		m_pSamplerVariable->Release();
 	}
 	if (m_pDiffuseMapVariable)
 	{
@@ -145,4 +154,31 @@ void BaseEffectClass::ChangeSampler(ID3D11Device* m_pDevice, D3D11_FILTER filter
 	if (FAILED(result)) return;
 
 	m_pSamplerVariable->SetSampler(0, m_pSamplerState);
+}
+
+void BaseEffectClass::ChangeDirectXCullingMode(ID3D11Device* m_pDevice, D3D11_CULL_MODE cullMode)
+{
+	if (m_pRasterizerState)
+	{
+		m_pRasterizerState->Release();
+	}
+
+	D3D11_RASTERIZER_DESC rasterizerDesc;
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = cullMode;
+	rasterizerDesc.FrontCounterClockwise = false;
+	rasterizerDesc.DepthBias = 0;
+	rasterizerDesc.DepthBiasClamp = 0.0f;
+	rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.ScissorEnable = false;
+	rasterizerDesc.MultisampleEnable = false;
+	rasterizerDesc.AntialiasedLineEnable = false;
+
+	HRESULT result = m_pDevice->CreateRasterizerState(&rasterizerDesc, &m_pRasterizerState);
+	if (FAILED(result)) return;
+
+	m_pRasterizerVariable = m_pCurrentEffect->GetVariableByName("gCullingMode")->AsRasterizer();
+	m_pRasterizerVariable->SetRasterizerState(0, m_pRasterizerState);
+
 }

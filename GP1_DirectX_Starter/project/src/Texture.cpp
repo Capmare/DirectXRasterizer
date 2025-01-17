@@ -5,8 +5,9 @@
 namespace dae
 {
 	Texture::Texture(ID3D11Device* pDevice, SDL_Surface* pSurface)
-		: m_pSurface{ pSurface }, m_pDevice{ pDevice }
+		: m_pSurface{ pSurface }, m_pDevice{ pDevice }, m_pSurfacePixels{ (uint32_t*)pSurface->pixels}
 	{
+
 		if (pDevice)
 		{
 			// initialize and create texture resource
@@ -39,15 +40,12 @@ namespace dae
 			SRVDesc.Texture2D.MipLevels = 1;
 
 			hr = pDevice->CreateShaderResourceView(m_pResource, &SRVDesc, &m_pSRV);
-			if (FAILED(hr)) return;
+			if (!FAILED(hr)) return;
 
 			SDL_FreeSurface(m_pSurface);
 			m_pSurface = nullptr;
 		}
-		else
-		{
-			m_pSurfacePixels = (uint32_t*)pSurface->pixels;
-		}
+		
 	}
 
 	Texture::~Texture()
@@ -63,6 +61,11 @@ namespace dae
 				m_pResource->Release();
 			}
 		}
+		if (m_pSurface)
+		{
+			SDL_FreeSurface(m_pSurface);
+			m_pSurface = nullptr;
+		}
 		
 	}
 
@@ -73,6 +76,7 @@ namespace dae
 		//Create & Return a new Texture Object (using SDL_Surface)
 		return new Texture{ pDevice,IMG_Load(path.c_str()) };
 	}
+
 
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{

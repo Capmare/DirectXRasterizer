@@ -2,7 +2,6 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Texture.h"
-#include "DataTypes.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -24,24 +23,38 @@ namespace dae
 		DirectXRenderer& operator=(DirectXRenderer&&) noexcept = delete;
 
 		void Update(const Timer* pTimer);
+		void VertexTransformationFunction(Mesh* mesh) const;
+		float Remap(float value, float istart, float istop, float ostart, float ostop);
+		void PixelShading(const Vertex_Out& v);
+		void RenderOnCPU();
 		void Render() const;
 
 		void ChangeToNextSampler();
 
 		void ToggleRotate() { m_bRotate = !m_bRotate; };
-		Camera m_pCamera;
-
-		float currentRotTime{};
-		bool m_bRotate;
-
+		void ShowFire() { m_bShowFire = !m_bShowFire; };
+		void NextLightingMode(){
+			if (m_CurrentLightingMode == LightingMode::Combined)
+			{
+				m_CurrentLightingMode = LightingMode::Diffuse;
+			}
+			else
+			{
+				m_CurrentLightingMode = LightingMode(int(m_CurrentLightingMode) +1);
+			}
+		}
+		void UseNormalMap() { m_bUseNormalMap = !m_bUseNormalMap; }
+		void UseDepth() { m_bUseDepth = !m_bUseDepth; }
+		void UseUniformColor() { m_bIsUniformColor = !m_bIsUniformColor; }
+		void UseBoundingBox() { m_bUseBoundingBox = !m_bUseBoundingBox; }
+		void ChangeDirectXCullingMode();
 
 	private:
 		SDL_Window* m_pWindow{};
 
-		int m_Width{};
-		int m_Height{};
+		Camera m_pCamera;
 
-		bool m_IsInitialized{ false };
+
 
 		ID3D11Device* m_pDevice;
 		ID3D11DeviceContext* m_pDeviceContext;
@@ -52,9 +65,20 @@ namespace dae
 		ID3D11Resource* m_pRenderTargetBuffer{};
 		ID3D11RenderTargetView* m_pRenderTargetView{};
 
+
+		int m_Width{};
+		int m_Height{};
+
+		bool m_IsInitialized{ false };
+		float* m_pDepthBufferPixels{};
+
+		SDL_Surface* m_pFrontBuffer{ nullptr };
+		SDL_Surface* m_pBackBuffer{ nullptr };
+		uint32_t* m_pBackBufferPixels{};
+
 		//DIRECTX
 		HRESULT InitializeDirectX();
-
+		void NdcToScreenSpace(Vertex_Out& v);
 		//...
 
 		
@@ -79,18 +103,26 @@ namespace dae
 		std::vector<uint32_t> fireIndices{};
 
 
-		Mesh* triangleMesh{};
+		Mesh* mesh{};
 		Mesh* fireMesh{};
 
-		Texture* Diffuse{};
-		Texture* Specular{};
-		Texture* Gloss{};
-		Texture* Normal{};
+		Texture* m_pTextureDiffuse{};
+		Texture* m_pTextureSpecular{};
+		Texture* m_pTextureGloss{}; 
+		Texture* m_pTextureNormal{}; 
 
 		Texture* FireDiffuse{};
 
+		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 
-
+		const float m_Shininess{ 25.f };
+		float currentRotTime{};
 		int samplerCount{};
+		bool m_bUseNormalMap{true};
+		bool m_bUseDepth{ false };
+		bool m_bRotate{ true };
+		bool m_bShowFire{ true };
+		bool m_bIsUniformColor{ false };
+		bool m_bUseBoundingBox{ false };
 	};
 }

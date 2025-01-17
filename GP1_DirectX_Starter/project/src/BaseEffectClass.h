@@ -26,6 +26,7 @@ public:
 	virtual void SetMatrix(const float* m);
 
 	virtual void ChangeSampler(ID3D11Device* m_pDevice, D3D11_FILTER filter);
+	virtual void ChangeDirectXCullingMode(ID3D11Device* m_pDevice, D3D11_CULL_MODE cullMode);
 
 	ID3DX11EffectTechnique* GetTechnique() const { return m_pTechnique; }
 	ID3D11InputLayout* GetInputLayout() const { return m_pInputLayout; }
@@ -42,8 +43,10 @@ protected:
 
 
 	ID3DX11EffectSamplerVariable* m_pSamplerVariable{};
-	ID3D11SamplerState* m_pSamplerState{};
+	ID3DX11EffectRasterizerVariable* m_pRasterizerVariable{};
 
+	ID3D11SamplerState* m_pSamplerState{};
+	ID3D11RasterizerState* m_pRasterizerState{};
 
 
 	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable{};
