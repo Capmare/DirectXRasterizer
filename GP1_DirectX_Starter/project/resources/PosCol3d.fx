@@ -63,10 +63,10 @@ float3 CalculateLamberDiffuse(float3 lambertTexture)
 
 float3 CalculatePhonSpec(float4x3 sampledTextures, float3 invViewDirection)
 {
-    const float3 ref = -normalize(reflect(gLightDirection, sampledTextures[3]));
+    const float3 ref = -normalize(reflect(-gLightDirection, saturate(sampledTextures[3])));
     const float PhonCosA = max(0.f, dot(ref, invViewDirection));
 		
-    return sampledTextures[1] * pow(PhonCosA, sampledTextures[2].r * Shininess);
+    return sampledTextures[1] * pow(PhonCosA, saturate(sampledTextures[2].r) * Shininess);
 
 }
 // vertex shader
@@ -98,7 +98,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     
     SampledNormal = mul(SampledNormal, tangentSpaceAxis);
 	
-    const float cosA = max(0.f, dot(-gLightDirection, SampledNormal));
+    const float cosA = max(0.f, dot(-gLightDirection, normalize(SampledNormal)));
     finalColor = LambertDiffuse + PhongSpec + float3(0.025f, 0.025f, 0.025f);
     finalColor *= cosA;
     return float4(finalColor, 1.f);
