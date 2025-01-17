@@ -39,7 +39,7 @@ int main(int argc, char* args[])
 	const uint32_t height = 480;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"DirectX - ***Insert Name/Class***",
+		"DirectX - ***Capmare David 2GD11***",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -51,7 +51,10 @@ int main(int argc, char* args[])
 	const auto pTimer = new Timer();
 
 
-	printf(COLOR_GREEN "[Key Bindings - SHARED]\n" COLOR_RESET
+	printf(
+		COLOR_RED "\nRMB to look around\n"
+		"RMB + WASD to move around\n\n" COLOR_RESET
+		COLOR_GREEN "[Key Bindings - SHARED]\n" COLOR_RESET
 		COLOR_YELLOW "[F1] Toggle Rasterizer Mode (HARDWARE/SOFTWARE)\n" COLOR_RESET
 		COLOR_YELLOW "[F2] Toggle Vehicle Rotation (ON/OFF)\n" COLOR_RESET
 		COLOR_YELLOW "[F9] Cycle CullMode (BACK/FRONT/NONE)\n" COLOR_RESET
@@ -102,6 +105,10 @@ int main(int argc, char* args[])
 					if (bIsDirectX)
 					{
 						pRenderer->ChangeDirectXCullingMode();
+					}
+					else
+					{
+						pRenderer->ChangeCulling();
 					}
 				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_F10)

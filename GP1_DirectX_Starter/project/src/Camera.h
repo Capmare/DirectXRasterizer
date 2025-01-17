@@ -8,6 +8,8 @@
 
 #include <algorithm>
 
+
+
 namespace dae {
 	class Camera
 	{
@@ -42,10 +44,14 @@ namespace dae {
 
 		float movementSpeed{ 10 };
 		float mouseSensivity{ 5 };
+		float mouseUpSpeed{ 250 };
+		double rendererMultiplier{ 1.0 }; // if it is directX should be 1 if it is cpu should be lower
+
 
 		float zn{ 1.f };
-		float zf{ 1000.f };
+		float zf{ 100.f };
 
+		bool bIsDirectX{ true };
 
 	public:
 		Matrix GetViewMatrix() const { return viewMatrix; }
@@ -105,11 +111,28 @@ namespace dae {
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
+			if (pKeyboardState[SDL_SCANCODE_F1])
+			{
+				bIsDirectX = !bIsDirectX;
+			}
+
+			if (bIsDirectX)
+			{
+				rendererMultiplier = 1;
+
+			}
+			else
+			{
+				rendererMultiplier = 0.001;
+			}
+
+			
+
 			if (mouseState & SDL_BUTTON(3))
 			{
 
-				totalPitch -= mouseY * deltaTime * mouseSensivity;
-				totalYaw += mouseX * deltaTime * mouseSensivity;
+				totalPitch -= mouseY * deltaTime * mouseSensivity * rendererMultiplier;
+				totalYaw += mouseX * deltaTime * mouseSensivity * rendererMultiplier;
 				totalPitch = std::clamp(totalPitch, -PI_DIV_2 + FLT_EPSILON, PI_DIV_2 - FLT_EPSILON);
 				forward = Matrix::CreateRotation(totalPitch, totalYaw, 0).TransformVector(Vector3::UnitZ).Normalized();
 
@@ -117,30 +140,35 @@ namespace dae {
 
 				if (pKeyboardState[SDL_SCANCODE_W])
 				{
-					origin += forward * deltaTime * movementSpeed;
+					origin += (forward * deltaTime * movementSpeed);
 				}
 				if (pKeyboardState[SDL_SCANCODE_S])
 				{
-					origin -= forward * deltaTime * movementSpeed;
+					origin -= forward * deltaTime * movementSpeed ;
 				}
 				if (pKeyboardState[SDL_SCANCODE_A])
 				{
-					origin -= right * deltaTime * movementSpeed;
+					origin -= right * deltaTime * movementSpeed ;
 				}
 				if (pKeyboardState[SDL_SCANCODE_D])
 				{
-					origin += right * deltaTime * movementSpeed;
+					origin += right * deltaTime * movementSpeed ;
 				}
 				if (pKeyboardState[SDL_SCANCODE_Q])
 				{
-					origin -= up * deltaTime * movementSpeed;
+					origin -= up * deltaTime * movementSpeed ;
 				}
 				if (pKeyboardState[SDL_SCANCODE_E])
 				{
-					origin += up * deltaTime * movementSpeed;
+					origin += up * deltaTime * movementSpeed ;
 				}
 			}
+			if (mouseState & SDL_BUTTON(1))
+			{
+				origin -= mouseY * up * deltaTime * mouseUpSpeed * rendererMultiplier;
+				origin += mouseX * right * deltaTime * mouseUpSpeed * rendererMultiplier;
 
+			}
 			//Update Matrices
 			CalculateViewMatrix();
 			CalculateProjectionMatrix(); //Try to optimize this - should only be called once or when fov/aspectRatio changes

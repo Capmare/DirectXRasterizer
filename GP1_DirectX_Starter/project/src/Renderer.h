@@ -48,6 +48,7 @@ namespace dae
 		void UseUniformColor() { m_bIsUniformColor = !m_bIsUniformColor; }
 		void UseBoundingBox() { m_bUseBoundingBox = !m_bUseBoundingBox; }
 		void ChangeDirectXCullingMode();
+		D3D11_CULL_MODE ChangeCulling();
 
 	private:
 		SDL_Window* m_pWindow{};

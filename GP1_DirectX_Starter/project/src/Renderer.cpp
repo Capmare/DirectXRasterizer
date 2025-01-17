@@ -24,7 +24,7 @@ namespace dae {
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		m_pCamera.Initialize(60.f, Vector3{ 0.f,0.f,-50.f });
+		m_pCamera.Initialize(45, Vector3{ 0.f,0.f,-50.f });
 
 		m_pCamera.aspectRatio = (float)m_Width / (float)m_Height;
 		
@@ -150,9 +150,9 @@ namespace dae {
 	void DirectXRenderer::Update(const Timer* pTimer)
 	{
 		m_pCamera.Update(pTimer);
-
-		mesh->m_Worldmatrix = Matrix::CreateRotationY(PI * currentRotTime / 25);
-		fireMesh->m_Worldmatrix = Matrix::CreateRotationY(PI * currentRotTime / 25);
+		
+		mesh->m_Worldmatrix = Matrix::CreateRotationY(45.0f * (PI / 180.0f) * currentRotTime );
+		fireMesh->m_Worldmatrix = Matrix::CreateRotationY(45.0f * (PI / 180.0f) * currentRotTime );
 
 		if (m_bRotate)
 		{
@@ -279,12 +279,16 @@ namespace dae {
 
 		if (m_bIsUniformColor)
 		{
-			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, 0, 0, 0));
+			constexpr float Darkgray = 255 * 0.1f;
+
+			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, Darkgray, Darkgray, Darkgray));
 
 		}
 		else
 		{
-			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+			constexpr float LightGray = 255*0.39f;
+
+			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, LightGray, LightGray, LightGray));
 
 		}
 
@@ -322,10 +326,12 @@ namespace dae {
 			NdcToScreenSpace(V1);
 			NdcToScreenSpace(V2);
 
-			if (mesh->primitiveTopology == PrimitiveTopology::TriangleStrip)
+			if ((mesh->primitiveTopology == PrimitiveTopology::TriangleStrip && index % 2 == 0) || mesh->m_CurrentCullingMode == CulingMode::Back)
 			{
-				if (index % 2 != 0)  std::swap(V1, V2);
+				std::swap(V1, V2);
 			}
+
+			
 
 			const int BiggestXVal = std::min(std::max({ V0.position.x,V1.position.x,V2.position.x }), (float)m_Width);
 			const int BiggestYVal = std::min(std::max({ V0.position.y,V1.position.y,V2.position.y }), (float)m_Height);
@@ -374,8 +380,12 @@ namespace dae {
 					float W2 = Vector2::Cross(e2, p2);
 					if (W2 < 0) continue;
 
+
+
+
 					const float TotalArea = W0 + W1 + W2;
 					if (TotalArea <= 0) continue;
+
 
 					W0 /= TotalArea;
 					W1 /= TotalArea;
@@ -402,8 +412,6 @@ namespace dae {
 
 					if (zInterp > m_pDepthBufferPixels[px + py * m_Width] || zInterp > 1 || zInterp < 0) continue;
 
-
-
 					m_pDepthBufferPixels[px + py * m_Width] = zInterp;
 
 
@@ -420,6 +428,8 @@ namespace dae {
 
 
 				}
+
+				
 			}
 		}
 
@@ -439,13 +449,12 @@ namespace dae {
 			return;
 
 		//// clear back buffer
-		float color[4] = { 0.f,0.f,0.3f,1.f };
-
+		float color[4] = { 0.39f,0.59f,0.93f,1.f };
 		if (m_bIsUniformColor)
 		{
-			color[0] = 0.f;
-			color[1] = 0.f;
-			color[2] = 0.f;
+			color[0] = 0.1f;
+			color[1] = 0.1f;
+			color[2] = 0.1f;
 		}
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
@@ -500,27 +509,33 @@ namespace dae {
 	{
 		D3D11_CULL_MODE newCullMode{};
 
-		switch (mesh->m_CurrentCullingMode)
-		{
-		default:
-			break;
-		case CulingMode::None:
-			newCullMode = D3D11_CULL_BACK;
-			mesh->m_CurrentCullingMode = CulingMode::Back;
-			break;
-		case CulingMode::Back:
-			newCullMode = D3D11_CULL_FRONT;
-			mesh->m_CurrentCullingMode = CulingMode::Front;
-			break;
-		case CulingMode::Front:
-			newCullMode = D3D11_CULL_NONE	;
-			mesh->m_CurrentCullingMode = CulingMode::None;
-			break;
-		}
+		newCullMode = ChangeCulling();
 
 		mesh->GetEffect()->ChangeDirectXCullingMode(m_pDevice,newCullMode);
 
 
+	}
+
+	D3D11_CULL_MODE DirectXRenderer::ChangeCulling()
+{
+		switch (mesh->m_CurrentCullingMode)
+		{
+		default:
+			return D3D11_CULL_NONE;
+			break;
+		case CulingMode::None:
+			mesh->m_CurrentCullingMode = CulingMode::Back;
+			return D3D11_CULL_BACK;
+			break;
+		case CulingMode::Back:
+			mesh->m_CurrentCullingMode = CulingMode::Front;
+			return D3D11_CULL_FRONT;
+			break;
+		case CulingMode::Front:
+			mesh->m_CurrentCullingMode = CulingMode::None;
+			return D3D11_CULL_NONE;
+			break;
+		}
 	}
 
 	HRESULT DirectXRenderer::InitializeDirectX()
