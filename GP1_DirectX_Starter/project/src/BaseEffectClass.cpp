@@ -129,7 +129,7 @@ void BaseEffectClass::SetWorldPosition(const float* pData)
 	}
 }
 
-void BaseEffectClass::SetMatrix(const float* m)
+void BaseEffectClass::SetWorldViewMatrix(const float* m)
 {
 	m_pMatWorldViewProjVariable->SetMatrix(m);
 

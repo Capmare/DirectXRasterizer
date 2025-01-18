@@ -3,7 +3,7 @@ float4x4 gWorldViewProj : WorldViewProjection;
 Texture2D gDiffuseMap : DiffuseMap;
 Texture2D gSpecularMap : SpecularMap;
 Texture2D gGlossinessMap : GlossinessMap;
-Texture2D gNormalMap : GlossinessMap;
+Texture2D gNormalMap : gNormalMap;
 
 float3 gLightDirection = { 0.577, -0.577, 0.577 };
 float4x4 gWorldMatrix : WorldMatrix;
@@ -16,7 +16,6 @@ RasterizerState gCullingMode
 {
     FrontCounterClockwise = FALSE;
 };
-
 
 SamplerState gSamplerState
 {
@@ -38,8 +37,8 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 position : SV_POSITION;
-    float4 worldPosition : WORLD;
-    float2 uv : TEXCOORD0;
+    float4 worldPosition : TEXCOORD0;
+    float2 uv : TEXCOORD1;
     float3 normal : NORMAL;
     float3 tangent : TANGENT;
 };
@@ -61,14 +60,25 @@ float3 CalculateLamberDiffuse(float3 lambertTexture)
     return lambertTexture * LightIntesity / PI;
 }
 
-float3 CalculatePhonSpec(float4x3 sampledTextures, float3 invViewDirection)
+float3 CalculatePhongSpec(float3 normal, float3 sampledNormal, float3 invViewDirection, float3 sampledColor, float shininess)
 {
-    const float3 ref = -normalize(reflect(-gLightDirection, saturate(sampledTextures[3])));
-    const float PhonCosA = max(0.f, dot(ref, invViewDirection));
-		
-    return sampledTextures[1] * pow(PhonCosA, saturate(sampledTextures[2].r) * Shininess);
+    // Normalize the input vectors
+    float3 normalizedLightDirection = normalize(gLightDirection); 
+    float3 normalizedSampledNormal = normalize(sampledNormal);
+    float3 normalizedInvViewDirection = normalize(invViewDirection);
 
+    // calc reflection vector
+    float3 reflectionVector = reflect(normalizedLightDirection, normalizedSampledNormal);
+    
+    // do phong
+    float phongCosAngle = max(0.f, -dot(reflectionVector, normalizedInvViewDirection));
+    float phongSpecular = saturate(pow(phongCosAngle, shininess));
+
+    return sampledColor * phongSpecular;
 }
+
+
+
 // vertex shader
 VS_OUTPUT VS(VS_INPUT input)
 {
@@ -76,28 +86,30 @@ VS_OUTPUT VS(VS_INPUT input)
     output.position = mul(float4(input.position, 1.f), gWorldViewProj);
     output.worldPosition = mul(float4(input.position, 1.f), gWorldMatrix);
     output.uv = input.uv;
-    output.normal = mul(float4(input.normal, 0.f), gWorldMatrix).xyz;
-    output.tangent = mul(float4(input.tangent, 0.f), gWorldMatrix).xyz;
+    output.normal = normalize(mul(float4(input.normal, 0.f), gWorldMatrix).xyz); 
+    output.tangent = normalize(mul(float4(input.tangent, 0.f), gWorldMatrix).xyz);
     return output;
 }
+
 
 // pixel shader
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
 	
-    const float3 invViewDirection = normalize(gCameraPosition - input.worldPosition.xyz);
+    const float3 invViewDirection = -normalize(gCameraPosition - input.worldPosition.xyz);
     float3 finalColor;
     const float4x3 SampledTextures = SampleTextures(input);
 	
     const float3 LambertDiffuse = CalculateLamberDiffuse(SampledTextures[0]);
-    const float3 PhongSpec = CalculatePhonSpec(SampledTextures, invViewDirection);
 	
     const float3 BiNormal = cross(input.normal, input.tangent);
-    float4x3 tangentSpaceAxis = { input.tangent, BiNormal, input.normal, (float3)0 };
+    float3x3 tangentSpaceAxis = { input.tangent, BiNormal, input.normal};
     float3 SampledNormal = 2 * SampledTextures[3] - float3(1, 1, 1);
     
     SampledNormal = mul(SampledNormal, tangentSpaceAxis);
 	
+    float3 PhongSpec = CalculatePhongSpec(SampledTextures[3], SampledNormal, invViewDirection, SampledTextures[1], SampledTextures[2].r * Shininess);
+    
     const float cosA = max(0.f, dot(-gLightDirection, normalize(SampledNormal)));
     finalColor = LambertDiffuse + PhongSpec + float3(0.025f, 0.025f, 0.025f);
     finalColor *= cosA;

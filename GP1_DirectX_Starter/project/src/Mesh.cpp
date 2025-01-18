@@ -49,7 +49,6 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertexData, std::vector<ui
 	initData.pSysMem = indexData.data();
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pIndexBuffer);
 
-	m_pEffect->SetWorldPosition(reinterpret_cast<const float*>(&m_Worldmatrix));
 
 	if (FAILED(result)) return;
 
@@ -74,7 +73,9 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContex, const Matrix& viewProj)
 		pDeviceContex->DrawIndexed(m_NumIndeces, 0, 0);
 	}
 	
-	m_pEffect->SetMatrix( reinterpret_cast<const float*>(&viewProj));
+	m_pEffect->SetWorldViewMatrix( reinterpret_cast<const float*>(&viewProj));
+	m_pEffect->SetWorldPosition(reinterpret_cast<const float*>(&m_Worldmatrix));
+
 }
 
 Mesh::~Mesh()

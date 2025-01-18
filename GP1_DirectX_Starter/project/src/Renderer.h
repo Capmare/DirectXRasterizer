@@ -2,6 +2,7 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "ThreadPool.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -29,19 +30,37 @@ namespace dae
 		void RenderOnCPU();
 		void Render() const;
 
+		
+		void IsDirectX(const bool& bIsTrue) { m_pCamera.SetIsDirectX(bIsTrue); };
 		void ChangeToNextSampler();
 
 		void ToggleRotate() { m_bRotate = !m_bRotate; };
 		void ShowFire() { m_bShowFire = !m_bShowFire; };
 		void NextLightingMode(){
-			if (m_CurrentLightingMode == LightingMode::Combined)
+
+			switch (m_CurrentLightingMode)
 			{
+			default:
+				break;
+			case LightingMode::OA:
 				m_CurrentLightingMode = LightingMode::Diffuse;
+				printf("\nDiffuse rendering\n");
+				break;
+			case LightingMode::Diffuse:
+				m_CurrentLightingMode = LightingMode::Specular;
+				printf("\nSpecular rendering\n");
+				break;
+			case LightingMode::Specular:
+				m_CurrentLightingMode = LightingMode::Combined;
+				printf("\nCombined rendering\n");
+				break;
+			case LightingMode::Combined:
+				m_CurrentLightingMode = LightingMode::OA;
+				printf("\nOA rendering\n");
+				break;
 			}
-			else
-			{
-				m_CurrentLightingMode = LightingMode(int(m_CurrentLightingMode) +1);
-			}
+
+			
 		}
 		void UseNormalMap() { m_bUseNormalMap = !m_bUseNormalMap; }
 		void UseDepth() { m_bUseDepth = !m_bUseDepth; }

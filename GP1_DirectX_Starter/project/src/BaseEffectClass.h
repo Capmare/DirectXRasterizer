@@ -23,7 +23,7 @@ public:
 	virtual void SetNormalMap(Texture* pNormalTexture) {};
 	virtual void SetCameraPosition(const float* pData);
 	virtual void SetWorldPosition(const float* pData);
-	virtual void SetMatrix(const float* m);
+	virtual void SetWorldViewMatrix(const float* m);
 
 	virtual void ChangeSampler(ID3D11Device* m_pDevice, D3D11_FILTER filter);
 	virtual void ChangeDirectXCullingMode(ID3D11Device* m_pDevice, D3D11_CULL_MODE cullMode);

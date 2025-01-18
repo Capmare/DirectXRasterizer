@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <emmintrin.h> // for SIMD 
 
 #include "Vector2.h"
 #include <cassert>

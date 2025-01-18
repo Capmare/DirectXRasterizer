@@ -7,6 +7,7 @@ namespace dae
 	Texture::Texture(ID3D11Device* pDevice, SDL_Surface* pSurface)
 		: m_pSurface{ pSurface }, m_pDevice{ pDevice }, m_pSurfacePixels{ (uint32_t*)pSurface->pixels}
 	{
+		cache = new ColorRGB[m_pSurface->w * m_pSurface->h];
 
 		if (pDevice)
 		{
@@ -50,6 +51,10 @@ namespace dae
 
 	Texture::~Texture()
 	{
+		if (cache)
+		{
+			delete cache;
+		}
 		if (m_pDevice)
 		{
 			if (m_pSRV)
@@ -74,30 +79,31 @@ namespace dae
 		//TODO
 		//Load SDL_Surface using IMG_LOAD
 		//Create & Return a new Texture Object (using SDL_Surface)
+
+
 		return new Texture{ pDevice,IMG_Load(path.c_str()) };
 	}
+
+	void Texture::PrecomputeCache()
+	{
+		Uint8 r, g, b;
+		for (int y = 0; y < m_pSurface->h; ++y) {
+			for (int x = 0; x < m_pSurface->w; ++x) {
+				SDL_GetRGB(m_pSurfacePixels[x + y * m_pSurface->w], m_pSurface->format, &r, &g, &b);
+				ColorRGB color = { (float)r / 255, (float)g / 255, (float)b / 255 };
+				cache[x + y * m_pSurface->w] = color;
+			}
+		}
+	}
+
+
 
 
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
-		//TODO
-		//Sample the correct texel for the given uv
-
-		int x = uv.x * m_pSurface->w;
-		int y = uv.y * m_pSurface->h;
-
-		Uint8 r;
-		Uint8 g;
-		Uint8 b;
-
-		SDL_GetRGB(m_pSurfacePixels[int(x + y * m_pSurface->w)], m_pSurface->format, &r, &g, &b);
-
-		ColorRGB color = { (float)r,(float)g,(float)b };
-
-		color /= 255;
-
-
-		return { color };
+		int x = (uv.x * m_pSurface->w);
+		int y = (uv.y * m_pSurface->h);
+		return cache[x + y * m_pSurface->w];
 	}
 
 }

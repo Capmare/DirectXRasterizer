@@ -53,7 +53,8 @@ int main(int argc, char* args[])
 
 	printf(
 		COLOR_RED "\nRMB to look around\n"
-		"RMB + WASD to move around\n\n" COLOR_RESET
+		"RMB + WASD to move around\n" 
+		"[K] Reset camera\n\n" COLOR_RESET
 		COLOR_GREEN "[Key Bindings - SHARED]\n" COLOR_RESET
 		COLOR_YELLOW "[F1] Toggle Rasterizer Mode (HARDWARE/SOFTWARE)\n" COLOR_RESET
 		COLOR_YELLOW "[F2] Toggle Vehicle Rotation (ON/OFF)\n" COLOR_RESET
@@ -67,7 +68,9 @@ int main(int argc, char* args[])
 		COLOR_MAGENTA "[F5] Cycle Shading Mode (COMBINED/OBSERVED_AREA/DIFFUSE/SPECULAR)\n" COLOR_RESET
 		COLOR_MAGENTA "[F6] Toggle NormalMap (ON/OFF)\n" COLOR_RESET
 		COLOR_MAGENTA "[F7] Toggle DepthBuffer Visualization (ON/OFF)\n" COLOR_RESET
-		COLOR_MAGENTA "[F8] Toggle BoundingBox Visualization (ON/OFF)\n" COLOR_RESET);
+		COLOR_MAGENTA "[F8] Toggle BoundingBox Visualization (ON/OFF)\n" COLOR_RESET
+	
+	);
 
 
 
@@ -94,6 +97,16 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_F1)
 				{
 					InvertBool(bIsDirectX);
+					pRenderer->IsDirectX(bIsDirectX);
+					if (bIsDirectX)
+					{
+						printf("\nRendering on DirectX\n");
+					}
+					else
+					{
+						printf("\nRendering on CPU\n");
+
+					}
 				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
 				{
@@ -137,6 +150,7 @@ int main(int argc, char* args[])
 					if (e.key.keysym.scancode == SDL_SCANCODE_F5)
 					{
 						pRenderer->NextLightingMode();
+
 					}
 					if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					{
@@ -154,7 +168,8 @@ int main(int argc, char* args[])
 				
 
 				break;
-			default:;
+			default: 
+				break;
 			}
 		}
 

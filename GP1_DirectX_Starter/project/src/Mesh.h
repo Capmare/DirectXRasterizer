@@ -38,6 +38,7 @@ struct Vertex_Out
 	Vector3 normal{};
 	Vector3 tangent{};
 	Vector3 viewDirection{};
+	Vector4 worldPositon{};
 };
 
 enum class PrimitiveTopology

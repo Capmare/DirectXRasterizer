@@ -58,6 +58,11 @@ namespace dae {
 		m_pTextureGloss = Texture::LoadFromFile(m_pDevice, "resources/vehicle_gloss.png");
 		m_pTextureNormal = Texture::LoadFromFile(m_pDevice, "resources/vehicle_normal.png");
 
+
+		m_pTextureDiffuse->PrecomputeCache();
+		m_pTextureSpecular->PrecomputeCache();
+		m_pTextureGloss->PrecomputeCache();
+		m_pTextureNormal->PrecomputeCache();
 		
 
 		mesh->GetEffect()->SetDiffuseMap(m_pTextureDiffuse);
@@ -81,7 +86,7 @@ namespace dae {
 
 		delete[] m_pDepthBufferPixels;
 
-	
+		
 		if (FireDiffuse)
 		{
 			delete FireDiffuse;
@@ -151,6 +156,7 @@ namespace dae {
 	{
 		m_pCamera.Update(pTimer);
 		
+		
 		mesh->m_Worldmatrix = Matrix::CreateRotationY(45.0f * (PI / 180.0f) * currentRotTime );
 		fireMesh->m_Worldmatrix = Matrix::CreateRotationY(45.0f * (PI / 180.0f) * currentRotTime );
 
@@ -180,7 +186,8 @@ namespace dae {
 				vrtx.uv,
 				mesh->m_Worldmatrix.TransformVector(vrtx.normal),
 				mesh->m_Worldmatrix.TransformVector(vrtx.tangent),
-				vrtx.viewDirection
+				vrtx.viewDirection,
+				mesh->m_Worldmatrix.TransformPoint(vrtx.position.ToPoint4())
 			};
 
 			vrtx_temp.position = WorldViewProjectionMatrix.TransformPoint(vrtx_temp.position);
@@ -189,6 +196,7 @@ namespace dae {
 			vrtx_temp.position.y /= vrtx_temp.position.w;
 			vrtx_temp.position.z /= vrtx_temp.position.w;
 
+			vrtx_temp.viewDirection = -(mesh->m_Worldmatrix.TransformPoint(vrtx.position) - m_pCamera.origin).Normalized();
 
 			mesh->m_vertexDataOut.emplace_back(vrtx_temp);
 		}
@@ -216,7 +224,7 @@ namespace dae {
 		sampledNorm = 2.f * sampledNorm - Vector3{ 1.f,1.f,1.f };
 		sampledNorm = tangentSpaceAXis.TransformVector(sampledNorm);
 
-		const Vector3 viewDirection = (m_pCamera.origin - v.position).Normalized();
+
 
 		if (!m_bUseNormalMap)
 		{
@@ -235,7 +243,7 @@ namespace dae {
 		{
 
 			const Vector3 reflect = lightDir - 2 * Vector3::Dot(sampledNorm, lightDir) * sampledNorm;
-			const float phongCosA = std::max(0.f, Vector3::Dot(viewDirection, reflect.Normalized()));
+			const float phongCosA = std::max(0.f, Vector3::Dot(v.viewDirection, reflect.Normalized()));
 			const ColorRGB PhonSpec = specular * pow(phongCosA, gloss.r * m_Shininess);
 			lambertDiffuse = diffuse * 7.f / PI;
 
@@ -279,19 +287,18 @@ namespace dae {
 
 		if (m_bIsUniformColor)
 		{
-			constexpr float Darkgray = 255 * 0.1f;
+			constexpr Uint8 Darkgray = Uint8(255.f * 0.1f);
 
 			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, Darkgray, Darkgray, Darkgray));
 
 		}
 		else
 		{
-			constexpr float LightGray = 255*0.39f;
+			constexpr Uint8 LightGray = Uint8(255.f*0.39f);
 
 			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, LightGray, LightGray, LightGray));
 
 		}
-
 		VertexTransformationFunction(mesh);
 
 		const int loopStep = mesh->primitiveTopology == PrimitiveTopology::TriangleList ? 3 : 1;
@@ -333,11 +340,11 @@ namespace dae {
 
 			
 
-			const int BiggestXVal = std::min(std::max({ V0.position.x,V1.position.x,V2.position.x }), (float)m_Width);
-			const int BiggestYVal = std::min(std::max({ V0.position.y,V1.position.y,V2.position.y }), (float)m_Height);
+			const int BiggestXVal = int(std::min(std::max({ V0.position.x,V1.position.x,V2.position.x }), (float)m_Width));
+			const int BiggestYVal = int(std::min(std::max({ V0.position.y,V1.position.y,V2.position.y }), (float)m_Height));
 
-			const int SmallestXVal = std::max(std::min({ V0.position.x,V1.position.x,V2.position.x }), 0.f);
-			const int SmallestYVal = std::max(std::min({ V0.position.y,V1.position.y,V2.position.y }), 0.f);
+			const int SmallestXVal = int(std::max(std::min({ V0.position.x,V1.position.x,V2.position.x }), 0.f));
+			const int SmallestYVal =int( std::max(std::min({ V0.position.y,V1.position.y,V2.position.y }), 0.f));
 
 			//RENDER LOGIC
 			for (int px{ SmallestXVal }; px <= BiggestXVal; ++px)
@@ -420,16 +427,15 @@ namespace dae {
 						Vector4{ (float)px,(float)py,zInterp,wInterp },
 						V0.color / V0.position.w * W0 + V1.color / V1.position.w * W1 + V2.color / V2.position.w * W2,
 						Vector2(V0.uv / V0.position.w * W0 + V1.uv / V1.position.w * W1 + V2.uv / V2.position.w * W2) * wInterp,
-						V0.normal * W0 + V1.normal * W1 + V2.normal * W2
+						V0.normal * W0 + V1.normal * W1 + V2.normal * W2,
+						V0.tangent * W0 + V1.tangent * W1 + V2.tangent * W2,
+						V0.viewDirection * W0 + V1.viewDirection * W1 + V2.viewDirection * W2,
+						V0.worldPositon* W0 + V1.worldPositon * W1 + V2.worldPositon * W2
 					};
 
 
 					PixelShading(finalPixel);
-
-
 				}
-
-				
 			}
 		}
 
@@ -457,7 +463,7 @@ namespace dae {
 			color[2] = 0.1f;
 		}
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0.f);
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 		mesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
 		fireMesh->GetEffect()->SetCameraPosition(reinterpret_cast<const float*>(&m_pCamera.origin));
@@ -482,18 +488,21 @@ namespace dae {
 		if (samplerCount == 0)
 		{
 			currentFilter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+			printf("\n Point sampling\n");
 
 		}
 		if (samplerCount == 1)
 		{
 			
 			currentFilter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			printf("\nLinear sampling\n");
 
 		}
 		if (samplerCount == 2)
 		{
 			
 			currentFilter = D3D11_FILTER_ANISOTROPIC;
+			printf("\nAnisotropic sampling\n");
 
 		}
 		mesh->GetEffect()->ChangeSampler(m_pDevice,currentFilter);
@@ -524,14 +533,17 @@ namespace dae {
 			return D3D11_CULL_NONE;
 			break;
 		case CulingMode::None:
+			printf("\nBack Culling\n");
 			mesh->m_CurrentCullingMode = CulingMode::Back;
 			return D3D11_CULL_BACK;
 			break;
 		case CulingMode::Back:
+			printf("\nFront Culling\n");
 			mesh->m_CurrentCullingMode = CulingMode::Front;
 			return D3D11_CULL_FRONT;
 			break;
 		case CulingMode::Front:
+			printf("\nNone Culling\n");
 			mesh->m_CurrentCullingMode = CulingMode::None;
 			return D3D11_CULL_NONE;
 			break;

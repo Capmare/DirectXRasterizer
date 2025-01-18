@@ -27,6 +27,8 @@ namespace dae {
 
 		Vector3 forward{ Vector3::UnitZ };
 
+		void SetIsDirectX(bool val) { bIsDirectX = val; }
+
 	private:
 		float fovAngle{ 90.f };
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
@@ -45,14 +47,13 @@ namespace dae {
 		float movementSpeed{ 10 };
 		float mouseSensivity{ 5 };
 		float mouseUpSpeed{ 250 };
-		double rendererMultiplier{ 1.0 }; // if it is directX should be 1 if it is cpu should be lower
+		float rendererMultiplier{ 1.0 }; // if it is directX should be 1 if it is cpu should be lower
 
 
 		float zn{ 1.f };
 		float zf{ 100.f };
 
 		bool bIsDirectX{ true };
-
 	public:
 		Matrix GetViewMatrix() const { return viewMatrix; }
 		Matrix GetProjectionMatrix() const { return ProjectionMatrix; }
@@ -111,28 +112,30 @@ namespace dae {
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (pKeyboardState[SDL_SCANCODE_F1])
-			{
-				bIsDirectX = !bIsDirectX;
-			}
-
 			if (bIsDirectX)
 			{
-				rendererMultiplier = 1;
+				rendererMultiplier = 1.f;
 
 			}
 			else
 			{
-				rendererMultiplier = 0.001;
+				rendererMultiplier = 0.001f;
 			}
 
-			
+			if (pKeyboardState[SDL_SCANCODE_K])
+			{
+				origin = Vector3{ 0.f,0.f,-50.f };
+				totalPitch = 0.f;
+				totalYaw = 0.f;
+				forward = Matrix::CreateRotation(totalPitch, totalYaw, 0).TransformVector(Vector3::UnitZ).Normalized();
+
+			}
 
 			if (mouseState & SDL_BUTTON(3))
 			{
 
-				totalPitch -= mouseY * deltaTime * mouseSensivity * rendererMultiplier;
-				totalYaw += mouseX * deltaTime * mouseSensivity * rendererMultiplier;
+				totalPitch -= float(mouseY * deltaTime * mouseSensivity * rendererMultiplier);
+				totalYaw +=float( mouseX * deltaTime * mouseSensivity * rendererMultiplier);
 				totalPitch = std::clamp(totalPitch, -PI_DIV_2 + FLT_EPSILON, PI_DIV_2 - FLT_EPSILON);
 				forward = Matrix::CreateRotation(totalPitch, totalYaw, 0).TransformVector(Vector3::UnitZ).Normalized();
 
@@ -165,8 +168,8 @@ namespace dae {
 			}
 			if (mouseState & SDL_BUTTON(1))
 			{
-				origin -= mouseY * up * deltaTime * mouseUpSpeed * rendererMultiplier;
-				origin += mouseX * right * deltaTime * mouseUpSpeed * rendererMultiplier;
+				origin -= (float)mouseY * up * deltaTime * mouseUpSpeed * rendererMultiplier;
+				origin += (float)mouseX * right * deltaTime * mouseUpSpeed * rendererMultiplier;
 
 			}
 			//Update Matrices
