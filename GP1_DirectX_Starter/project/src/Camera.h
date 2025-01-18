@@ -119,7 +119,7 @@ namespace dae {
 			}
 			else
 			{
-				rendererMultiplier = 0.001f;
+				rendererMultiplier = 0.01f;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_K])

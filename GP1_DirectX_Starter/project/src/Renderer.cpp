@@ -2,6 +2,8 @@
 #include "Renderer.h"
 #include "Utils.h"
 #include "Effect.h"
+#include <execution>
+#include <algorithm>
 
 namespace dae {
 
@@ -277,122 +279,99 @@ namespace dae {
 	}
 
 
+
+
+	// ... (other code)
+
+	// Main Render Function
+
 	void DirectXRenderer::RenderOnCPU()
 	{
-		//@START
-	//Lock BackBuffer
+		// Lock BackBuffer
 		SDL_LockSurface(m_pBackBuffer);
 
 		std::fill(m_pDepthBufferPixels, m_pDepthBufferPixels + (m_Width * m_Height), FLT_MAX);
 
-		if (m_bIsUniformColor)
-		{
-			constexpr Uint8 Darkgray = Uint8(255.f * 0.1f);
+		auto fillColor = [this](Uint8 gray) {
+			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, gray, gray, gray));
+			};
 
-			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, Darkgray, Darkgray, Darkgray));
-
+		if (m_bIsUniformColor) {
+			fillColor(static_cast<Uint8>(255.f * 0.1f));
 		}
-		else
-		{
-			constexpr Uint8 LightGray = Uint8(255.f*0.39f);
-
-			SDL_FillRect(m_pBackBuffer, &m_pBackBuffer->clip_rect, SDL_MapRGB(m_pBackBuffer->format, LightGray, LightGray, LightGray));
-
+		else {
+			fillColor(static_cast<Uint8>(255.f * 0.39f));
 		}
+
 		VertexTransformationFunction(mesh);
 
 		const int loopStep = mesh->primitiveTopology == PrimitiveTopology::TriangleList ? 3 : 1;
 		const int sizeReduction = mesh->primitiveTopology == PrimitiveTopology::TriangleList ? 0 : 2;
 
-		for (int index{}; index < mesh->m_indexData.size() - sizeReduction; index += loopStep)
-		{
+		// Parallelize the outer loop
+		std::for_each(std::execution::par, mesh->m_indexData.begin(), mesh->m_indexData.end() - sizeReduction, [this, loopStep](int index) {
+			if (index % loopStep != 0) return;
 
-			Vertex_Out V0 =mesh->m_vertexDataOut[mesh->m_indexData[0 + index]];
-			Vertex_Out V1 =mesh->m_vertexDataOut[mesh->m_indexData[1 + index]];
-			Vertex_Out V2 =mesh->m_vertexDataOut[mesh->m_indexData[2 + index]];
+			Vertex_Out V0 = mesh->m_vertexDataOut[mesh->m_indexData[index + 0]];
+			Vertex_Out V1 = mesh->m_vertexDataOut[mesh->m_indexData[index + 1]];
+			Vertex_Out V2 = mesh->m_vertexDataOut[mesh->m_indexData[index + 2]];
 
-			if (
-				V0.position.x < -1 || V0.position.x > 1 ||
-				V0.position.y < -1 || V0.position.y > 1 ||
-				V0.position.w < 0 ||
-
-				V1.position.x < -1 || V1.position.x > 1 ||
-				V1.position.y < -1 || V1.position.y > 1 ||
-				V1.position.w < 0 ||
-
-				V2.position.x < -1 || V2.position.x > 1 ||
-				V2.position.y < -1 || V2.position.y > 1 ||
-				V2.position.w < 0
-				)
-
-			{
-				continue;
+			// Clip-space check
+			if (V0.position.x < -1 || V0.position.x > 1 || V0.position.y < -1 || V0.position.y > 1 || V0.position.w < 0 ||
+				V1.position.x < -1 || V1.position.x > 1 || V1.position.y < -1 || V1.position.y > 1 || V1.position.w < 0 ||
+				V2.position.x < -1 || V2.position.x > 1 || V2.position.y < -1 || V2.position.y > 1 || V2.position.w < 0) {
+				return; // Skip this triangle
 			}
 
 			NdcToScreenSpace(V0);
 			NdcToScreenSpace(V1);
 			NdcToScreenSpace(V2);
 
-			if ((mesh->primitiveTopology == PrimitiveTopology::TriangleStrip && index % 2 == 0) || mesh->m_CurrentCullingMode == CulingMode::Back)
-			{
+			if ((mesh->primitiveTopology == PrimitiveTopology::TriangleStrip && index % 2 == 0) || mesh->m_CurrentCullingMode == CulingMode::Back) {
 				std::swap(V1, V2);
 			}
 
-			
+			const int BiggestXVal = int(std::min(std::max({ V0.position.x, V1.position.x, V2.position.x }), static_cast<float>(m_Width)));
+			const int BiggestYVal = int(std::min(std::max({ V0.position.y, V1.position.y, V2.position.y }), static_cast<float>(m_Height)));
+			const int SmallestXVal = int(std::max(std::min({ V0.position.x, V1.position.x, V2.position.x }), 0.f));
+			const int SmallestYVal = int(std::max(std::min({ V0.position.y, V1.position.y, V2.position.y }), 0.f));
 
-			const int BiggestXVal = int(std::min(std::max({ V0.position.x,V1.position.x,V2.position.x }), (float)m_Width));
-			const int BiggestYVal = int(std::min(std::max({ V0.position.y,V1.position.y,V2.position.y }), (float)m_Height));
+			// Inner loop remains the same but can be further optimized
 
-			const int SmallestXVal = int(std::max(std::min({ V0.position.x,V1.position.x,V2.position.x }), 0.f));
-			const int SmallestYVal =int( std::max(std::min({ V0.position.y,V1.position.y,V2.position.y }), 0.f));
-
-			//RENDER LOGIC
-			for (int px{ SmallestXVal }; px <= BiggestXVal; ++px)
-			{
-				for (int py{ SmallestYVal }; py <= BiggestYVal; ++py)
-				{
-
-					if (m_bUseBoundingBox)
-					{
+			for (int px = SmallestXVal; px <= BiggestXVal; ++px) {
+				for (int py = SmallestYVal; py <= BiggestYVal; ++py) {
+					if (m_bUseBoundingBox) {
 						Vertex_Out BoundingBoxPixel{};
 
-						BoundingBoxPixel.position = Vector4{ (float)px,(float)py,1,1 };
-						BoundingBoxPixel.color = ColorRGB{ 1,1,1 };
+						BoundingBoxPixel.position = Vector4{ static_cast<float>(px), static_cast<float>(py), 1, 1 };
+						BoundingBoxPixel.color = ColorRGB{ 1, 1, 1 };
 
-						m_pBackBufferPixels[(int)px + ((int)py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+						m_pBackBufferPixels[px + py * m_Width] = SDL_MapRGB(m_pBackBuffer->format,
 							static_cast<uint8_t>(BoundingBoxPixel.color.r * 255),
 							static_cast<uint8_t>(BoundingBoxPixel.color.g * 255),
 							static_cast<uint8_t>(BoundingBoxPixel.color.b * 255));
 						continue;
 					}
-					
 
-
-
-					const Vector2 P{ px + .5f, py + .5f };
-
+					const Vector2 P{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
 
 					const Vector2 e0{ V2.position.GetXY() - V1.position.GetXY() };
 					const Vector2 p0{ P - V1.position.GetXY() };
 					float W0 = Vector2::Cross(e0, p0);
 					if (W0 < 0) continue;
 
-					const Vector2 e1 = { V0.position.GetXY() - V2.position.GetXY() };
-					const Vector2 p1 = { P - V2.position.GetXY() };
+					const Vector2 e1{ V0.position.GetXY() - V2.position.GetXY() };
+					const Vector2 p1{ P - V2.position.GetXY() };
 					float W1 = Vector2::Cross(e1, p1);
 					if (W1 < 0) continue;
 
-					const Vector2 e2 = { V1.position.GetXY() - V0.position.GetXY() };
-					const Vector2 p2 = { P - V0.position.GetXY() };
+					const Vector2 e2{ V1.position.GetXY() - V0.position.GetXY() };
+					const Vector2 p2{ P - V0.position.GetXY() };
 					float W2 = Vector2::Cross(e2, p2);
 					if (W2 < 0) continue;
 
-
-
-
 					const float TotalArea = W0 + W1 + W2;
 					if (TotalArea <= 0) continue;
-
 
 					W0 /= TotalArea;
 					W1 /= TotalArea;
@@ -403,49 +382,44 @@ namespace dae {
 					const float wInterp =
 						1 /
 						(
-							(1 / (V0.position.w) * W0) +
-							(1 / (V1.position.w) * W1) +
-							(1 / (V2.position.w) * W2)
+							(1 / V0.position.w * W0) +
+							(1 / V1.position.w * W1) +
+							(1 / V2.position.w * W2)
 							);
-
 
 					const float zInterp =
 						1 /
 						(
-							(1 / (V0.position.z) * W0) +
-							(1 / (V1.position.z) * W1) +
-							(1 / (V2.position.z) * W2)
+							(1 / V0.position.z * W0) +
+							(1 / V1.position.z * W1) +
+							(1 / V2.position.z * W2)
 							);
 
 					if (zInterp > m_pDepthBufferPixels[px + py * m_Width] || zInterp > 1 || zInterp < 0) continue;
 
 					m_pDepthBufferPixels[px + py * m_Width] = zInterp;
 
-
-					const Vertex_Out finalPixel
-					{
-						Vector4{ (float)px,(float)py,zInterp,wInterp },
+					const Vertex_Out finalPixel{
+						Vector4{ static_cast<float>(px), static_cast<float>(py), zInterp, wInterp },
 						V0.color / V0.position.w * W0 + V1.color / V1.position.w * W1 + V2.color / V2.position.w * W2,
 						Vector2(V0.uv / V0.position.w * W0 + V1.uv / V1.position.w * W1 + V2.uv / V2.position.w * W2) * wInterp,
 						V0.normal * W0 + V1.normal * W1 + V2.normal * W2,
 						V0.tangent * W0 + V1.tangent * W1 + V2.tangent * W2,
 						V0.viewDirection * W0 + V1.viewDirection * W1 + V2.viewDirection * W2,
-						V0.worldPositon* W0 + V1.worldPositon * W1 + V2.worldPositon * W2
+						V0.worldPositon * W0 + V1.worldPositon * W1 + V2.worldPositon * W2
 					};
-
 
 					PixelShading(finalPixel);
 				}
 			}
-		}
+			});
 
-		//@END
-	//Update SDL Surface
+		//Unlock and update SDL Surface
 		SDL_UnlockSurface(m_pBackBuffer);
 		SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
 		SDL_UpdateWindowSurface(m_pWindow);
-
 	}
+
 
 	void DirectXRenderer::Render() const
 	{

@@ -90,19 +90,16 @@ namespace dae
 		for (int y = 0; y < m_pSurface->h; ++y) {
 			for (int x = 0; x < m_pSurface->w; ++x) {
 				SDL_GetRGB(m_pSurfacePixels[x + y * m_pSurface->w], m_pSurface->format, &r, &g, &b);
-				ColorRGB color = { (float)r / 255, (float)g / 255, (float)b / 255 };
+				ColorRGB color = { r / 255.f, g / 255.f, b / 255.f };
 				cache[x + y * m_pSurface->w] = color;
 			}
 		}
 	}
 
-
-
-
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
-		int x = (uv.x * m_pSurface->w);
-		int y = (uv.y * m_pSurface->h);
+		int x = int(uv.x * m_pSurface->w);
+		int y = int(uv.y * m_pSurface->h);
 		return cache[x + y * m_pSurface->w];
 	}
 
